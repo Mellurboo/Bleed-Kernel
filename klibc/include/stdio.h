@@ -1,0 +1,9 @@
+#ifndef STDIO_H
+#define STDIO_H 1
+
+/// @brief kernel tty print formatted string
+/// @param fmt string
+/// @param vardic argument list
+void kprintf(const char *fmt, ...);
+
+#endif
