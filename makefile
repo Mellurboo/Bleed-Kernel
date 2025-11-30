@@ -76,12 +76,12 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN)
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 2G -serial stdio
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 4G -serial stdio
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 	qemu-system-x86_64 \
-		-M q35 \
+		-m 4G \
 		-drive if=pflash,unit=0,format=raw,file=edk2-ovmf/ovmf-code-x86_64.fd,readonly=on \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \

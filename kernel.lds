@@ -71,4 +71,6 @@ SECTIONS
         *(.eh_frame*)
         *(.note .note.*)
     }
+
+    __kernel_end = .;
 }

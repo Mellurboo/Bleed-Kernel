@@ -7,6 +7,12 @@ volatile struct limine_memmap_request memmap_request = {
     .revision = 0
 };
 
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_hhdm_request hddm_request = {
+    .id = LIMINE_HHDM_REQUEST_ID,
+    .revision = 0,
+};
+
 __attribute__((used, section(".limine_requests_start")))
 volatile uint64_t limine_requests_start_marker[] =
     LIMINE_REQUESTS_START_MARKER;
