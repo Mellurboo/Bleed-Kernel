@@ -6,6 +6,7 @@
 #include <ansii.h>
 #include <stddef.h>
 #include <string.h>
+#include <panic.h>
 
 #define PAGE_SIZE       4096
 #define FRAME_USED      1
@@ -15,13 +16,13 @@
 #define PAGE_ALIGN_UP(x) ((((x) + (PAGE_SIZE-1))/ PAGE_SIZE)*PAGE_SIZE)
 
 extern volatile struct limine_memmap_request memmap_request;
-extern volatile struct limine_hhdm_request hddm_request;
+extern volatile struct limine_hhdm_request hhdm_request;
 
 static bitmap_entry_t* bitmap_head = NULL;
 
 uintptr_t get_max_paddr(){
     struct limine_memmap_response *mmap = memmap_request.response;
-    if (!mmap) return 0;
+    if (!mmap) kpanic("MEMORY_MAP_NOT_AVAILABLE");
 
     uint64_t max = 0;
     for (uint64_t i = 0; i < mmap->entry_count; i++){
@@ -40,7 +41,7 @@ uintptr_t get_max_paddr(){
 /// @return unsigned 64 memory size in bytes
 size_t get_usable_pmem_size(){
     struct limine_memmap_response* mmap = memmap_request.response;
-    if (!mmap) return 0;
+    if (!mmap) kpanic("MEMORY_MAP_NOT_AVAILABLE");
 
     size_t bytes = 0;
     for (size_t i = 0; i < mmap->entry_count; i++){
@@ -72,7 +73,7 @@ void entry_mark_available(bitmap_entry_t* entry, size_t start, size_t page_count
 /// @return success
 uint8_t init_pmm() {
     struct limine_memmap_response* mmap = memmap_request.response;
-    struct limine_hhdm_response* hhdm = hddm_request.response;
+    struct limine_hhdm_response* hhdm = hhdm_request.response;
     bitmap_entry_t** prev_tail = &bitmap_head;
 
     for (uint64_t i = 0; i < mmap->entry_count; i++) {
@@ -112,15 +113,16 @@ static int64_t bitmap_find_free(bitmap_entry_t* entry, size_t count){
         }else{
             free_extention = 0;
         }
-        return -1;
     }
+
+    return -1;
 }
 
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
 void *alloc_page(size_t page_count){
-    struct limine_hhdm_response* hhdm = hddm_request.response;
+    struct limine_hhdm_response* hhdm = hhdm_request.response;
     for (bitmap_entry_t* head = bitmap_head; head != NULL; head = head->next_entry){
         if (head->available_pages >= page_count){
             int64_t start = bitmap_find_free(head, page_count);
@@ -128,7 +130,7 @@ void *alloc_page(size_t page_count){
 
             entry_mark_unavailable(head, start, page_count);
             uintptr_t paddr = head->base + (start * PAGE_SIZE);
-            return (void *)(paddr + hddm_request.response->offset);
+            return (void *)(paddr + hhdm_request.response->offset);
         }else continue;
     }
     return NULL;

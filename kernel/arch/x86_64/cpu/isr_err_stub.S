@@ -18,35 +18,14 @@ isr_stub_\num:
     push %r14
     push %r15
 
-    mov %rsp, %rdi
-    mov $\num, %rsi
-    mov 128(%rsp), %rdx
+    mov $\num, %rdi
     call ke_exception_handler
 .endm
 
 .macro isr_no_err_stub num
 isr_stub_\num:
-    push %rax
-    push %rbx
-    push %rcx
-    push %rdx
-    push %rbp
-    push %rsi
-    push %rdi
-    push %r8
-    push %r9
-    push %r10
-    push %r11
-    push %r12
-    push %r13
-    push %r14
-    push %r15
-
-    mov %rsp, %rdi
-    mov $\num, %rsi
-    xor %rdx, %rdx 
+    mov $\num, %rdi
     call ke_exception_handler
-    add $128, %rsp
     iretq
 .endm
 
