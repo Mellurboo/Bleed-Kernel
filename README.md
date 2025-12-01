@@ -7,7 +7,8 @@ A 64-bit Operating System in C using the Limine Bootloader for UEFI and BIOS sys
 - [x]  IDT
 - [x]  Exception Handler
 - [x]  PMM
-- [x]  Page Mapping (vaddr -> paddr conversion and some basic virtual memory allocation but its not really nessisary)
+- [x]  Vaddr Paddr Conversion
+- [ ]  Paging Allocation
 - [ ]  TempFS + VFS
 - [ ]  initrd
 - [ ]  uACPI integration
