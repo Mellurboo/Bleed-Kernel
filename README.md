@@ -8,7 +8,7 @@ A 64-bit Operating System in C using the Limine Bootloader for UEFI and BIOS sys
 - [x]  Exception Handler
 - [x]  PMM
 - [x]  Vaddr Paddr Conversion
-- [ ]  Paging Allocation
+- [x]  Paging Allocation
 - [ ]  TempFS + VFS
 - [ ]  initrd
 - [ ]  uACPI integration
