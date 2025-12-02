@@ -50,5 +50,4 @@ and clean it all up with
 make clean
 ```
 
-
-
+Note: the Git commit history is a bit weird becuase im learning and getting used to Git on a cli, sorry </3
