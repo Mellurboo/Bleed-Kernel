@@ -1,4 +1,5 @@
 #include <cpu/cpu_state.h>
+#include <drivers/serial.h>
 #include <stdio.h>
 #include <ansii.h>
 
@@ -9,6 +10,10 @@ void kpanic(const char* reason) {
     cpu_state_t cpu;
     save_cpu_state(&cpu);
 
+    serial_write("\n>>> Kernel Panic <<<\n");
+    serial_write("Reason: ");
+    serial_write(reason);
+    serial_write("\n");
     kprintf("%s>>> KERNEL PANIC <<<%s\n", RED, RESET);
     kprintf("%sReason: %s%s\n", RED, reason, RESET);
 

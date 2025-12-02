@@ -1,3 +1,4 @@
 .vscode/
 bin/*
 *.iso
+edk2-ovmf

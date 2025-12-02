@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <ansii.h>
+#include <drivers/serial.h>
 
 typedef struct cpu_state {
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
@@ -14,8 +15,14 @@ typedef struct cpu_state {
 } cpu_state_t;
 
 
-#define PRINT_REG(name, value) \
-    kprintf(#name "=%s0x%p%s\t", CYAN, (void*)(value), RESET)
+#define PRINT_REG(name, value)                                                \
+    do {                                                                      \
+        serial_write(#name "=");                                              \
+        serial_write_hex((uint64_t)(value));                                  \
+        serial_write("\n");                                                   \
+        kprintf(#name "=%s0x%p%s\t", CYAN, (void*)(value), RESET); \
+    } while (0)
+
 
 void save_cpu_state(cpu_state_t* cpu);
 void dump_cpu_state(cpu_state_t* cpu);
