@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern volatile struct limine_memmap_request memmap_request;
+extern volatile struct limine_hhdm_request hhdm_request;
+
 typedef struct BitmapEntry {
     struct BitmapEntry* next_entry;
     size_t available_pages;
@@ -11,6 +14,10 @@ typedef struct BitmapEntry {
     uintptr_t base;
     uint64_t bitmap[];
 } bitmap_entry_t;
+
+static inline void* paddr_to_vaddr(void* paddr){
+    return paddr + hhdm_request.response->offset;
+}
 
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho

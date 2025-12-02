@@ -15,9 +15,6 @@
 #define PAGE_ALIGN_DOWN(x) (((x) / PAGE_SIZE)*PAGE_SIZE)
 #define PAGE_ALIGN_UP(x) ((((x) + (PAGE_SIZE-1))/ PAGE_SIZE)*PAGE_SIZE)
 
-extern volatile struct limine_memmap_request memmap_request;
-extern volatile struct limine_hhdm_request hhdm_request;
-
 static bitmap_entry_t* bitmap_head = NULL;
 
 uintptr_t get_max_paddr(){
@@ -126,14 +123,20 @@ void *alloc_page(size_t page_count){
     for (bitmap_entry_t* head = bitmap_head; head != NULL; head = head->next_entry){
         if (head->available_pages >= page_count){
             int64_t start = bitmap_find_free(head, page_count);
-            if (start < 0) continue;
+
+            if (start < 0)
+                kpanic("OUT OF PHYSICAL MEMORY (no contiguous block)");
 
             entry_mark_unavailable(head, start, page_count);
             uintptr_t paddr = head->base + (start * PAGE_SIZE);
-            return (void *)(paddr + hhdm_request.response->offset);
-        }else continue;
+
+            kprintf(LOG_OK "Page Allocated at 0x%p (physical: 0x%p)\n",
+                (void *)(paddr + hhdm->offset), paddr);
+
+            return (void *)paddr;
+        }
     }
-    return NULL;
+    kpanic("OUT OF PHYSICAL MEMORY (not enough pages for page allocation)");
 }
 
 /// @brief frees the page(s)

@@ -76,7 +76,7 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN)
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 4G -serial stdio
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 16G -serial stdio
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso
