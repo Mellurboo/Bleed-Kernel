@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <ansii.h>
 #include <panic.h>
-#include <x86_64/cpu/cpu_state.h>
+#include <cpu/cpu_state.h>
 
 const char* exception_name(uint8_t vector) {
     static const char* names[32] = {

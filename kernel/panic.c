@@ -1,4 +1,4 @@
-#include <x86_64/cpu/cpu_state.h>
+#include <cpu/cpu_state.h>
 #include <stdio.h>
 #include <ansii.h>
 

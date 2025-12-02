@@ -1,4 +1,4 @@
-#include <x86_64/cpu/cpu_state.h>
+#include <cpu/cpu_state.h>
 #include <stdio.h>
 
 void save_cpu_state(cpu_state_t* cpu) {

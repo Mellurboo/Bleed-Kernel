@@ -2,13 +2,17 @@
 #include <stdio.h>
 #include <ansii.h>
 #include <lib/limine/limine.h>
-#include <x86_64/gdt/gdt.h>
-#include <x86_64/idt/idt.h>
+#include <gdt/gdt.h>
+#include <idt/idt.h>
 #include <string.h>
 #include <panic.h>
 #include <mm/pmm.h>
+#include <drivers/serial.h>
 
 void kmain(){
+    init_serial();
+    serial_write("Hello COM1, Starting Bleed.\n");
+
     init_gdt();
     init_idt();
     kprintf(LOG_INFO "Physical Memory: %lluMiB\n", get_usable_pmem_size() / 1024 / 1024);
@@ -21,7 +25,7 @@ void kmain(){
 
     kprintf(LOG_OK "Stored a number:\n\tpaddr: 0x%p\n\tvaddr: @ 0x%p (with a value of %llu)\n", paddr, vaddr, *vaddr);
     free_page(paddr, 1);
-    
+
     for (;;) {}
     kpanic("KERNEL_FINISHED_EXECUTION");
 }

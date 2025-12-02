@@ -1,4 +1,4 @@
-#include <x86_64/gdt/gdt.h>
+#include <gdt/gdt.h>
 #include <ansii.h>
 #include <stdint.h>
 #include <stdio.h>

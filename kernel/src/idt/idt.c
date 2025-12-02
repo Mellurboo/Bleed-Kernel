@@ -1,4 +1,4 @@
-#include <x86_64/idt/idt.h>
+#include <idt/idt.h>
 #include <ansii.h>
 #include <stdio.h>
 #include <stdint.h>
