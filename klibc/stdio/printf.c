@@ -7,7 +7,7 @@
 #define NANOPRINTF_USE_WRITEBACK_FORMAT_SPECIFIERS       0
 #define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS           0
 
-#include <lib/flanterm/framebuffer.h>
+#include <drivers/framebuffer/framebuffer.h>
 #include <lib/flanterm/flanterm.h>
 #include <string.h>
 #include <stdarg.h>

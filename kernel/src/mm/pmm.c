@@ -12,8 +12,8 @@
 #define FRAME_USED      1
 #define FRAME_FREE      0
 
-#define PAGE_ALIGN_DOWN(x) (((x) / PAGE_SIZE)*PAGE_SIZE)
-#define PAGE_ALIGN_UP(x) ((((x) + (PAGE_SIZE-1))/ PAGE_SIZE)*PAGE_SIZE)
+#define PAGE_ALIGN_DOWN(x)  (((x) / PAGE_SIZE)*PAGE_SIZE)
+#define PAGE_ALIGN_UP(x)    ((((x) + (PAGE_SIZE-1))/ PAGE_SIZE)*PAGE_SIZE)
 
 static bitmap_entry_t* bitmap_head = NULL;
 
@@ -85,18 +85,20 @@ uint8_t init_pmm() {
 
         bmentry->capacity = mmap->entries[i]->length / PAGE_SIZE;
         bmentry->available_pages = bmentry->capacity;
-        bmentry->base = mmap->entries[i]->base;
-
-        size_t bitmap_header_page_size = PAGE_ALIGN_UP(sizeof(bitmap_entry_t) + (bmentry->capacity + 7) / 8) / PAGE_SIZE;
-        entry_mark_unavailable(bmentry, 0, bitmap_header_page_size);
         
         memset(bmentry->bitmap, FRAME_FREE, ((bmentry->capacity) + 7) / 8);
+        size_t bitmap_header_page_size = PAGE_ALIGN_UP(sizeof(bitmap_entry_t) + (bmentry->capacity + 7) / 8) / PAGE_SIZE;
+        entry_mark_unavailable(bmentry, 0, bitmap_header_page_size);
+    
         kprintf(LOG_OK "Usable Space Bitmap created: 0x%p | %llu Pages (%llu KiB) | Available Pages: %llu\n", (void *)bmentry, bmentry->capacity, ((bmentry->capacity)*PAGE_SIZE)/1024, bmentry->available_pages);
     }
+
     kprintf(LOG_OK "PMM Initialised\n");
     return 0;
 }
 
+/// "what the absoloute fuck" ~ dcraft
+/// to:do improve this
 static int64_t bitmap_find_free(bitmap_entry_t* entry, size_t count){
     size_t free_extention = 0;
     size_t start = 0;
@@ -118,33 +120,34 @@ static int64_t bitmap_find_free(bitmap_entry_t* entry, size_t count){
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
-void *alloc_page(size_t page_count){
+paddr_t alloc_pages(size_t page_count){
+    if (page_count == 0) return NULL;
     struct limine_hhdm_response* hhdm = hhdm_request.response;
     for (bitmap_entry_t* head = bitmap_head; head != NULL; head = head->next_entry){
         if (head->available_pages >= page_count){
             int64_t start = bitmap_find_free(head, page_count);
 
             if (start < 0)
-                kpanic("OUT OF PHYSICAL MEMORY (no contiguous block)");
+                continue;
 
             entry_mark_unavailable(head, start, page_count);
-            uintptr_t paddr = head->base + (start * PAGE_SIZE);
+            uintptr_t paddr = (((paddr_t)head) - hhdm->offset) + (start * PAGE_SIZE);
 
             kprintf(LOG_OK "Page Allocated at 0x%p (physical: 0x%p)\n",
-                (void *)(paddr + hhdm->offset), paddr);
+                (paddr_to_vaddr(paddr)), paddr);
 
-            return (void *)paddr;
+            return paddr;
         }
     }
-    kpanic("OUT OF PHYSICAL MEMORY (not enough pages for page allocation)");
+    return NULL;
 }
 
 /// @brief frees the page(s)
 /// @param paddr base of the start of the free.
 /// @param page_count ammount of pages to free
-void free_page(void* paddr, size_t page_count){
+void free_pages(paddr_t paddr, size_t page_count){
     for (bitmap_entry_t* entry = bitmap_head; entry != NULL; entry = entry->next_entry){
-        uintptr_t entry_start = (uintptr_t)entry->base;
+        uintptr_t entry_start = ((paddr_t)entry) - hhdm_request.response->offset;
         uintptr_t entry_end = entry_start + entry->capacity * PAGE_SIZE;
 
         if ((uintptr_t)paddr >= entry_start && (uintptr_t)paddr < entry_end){

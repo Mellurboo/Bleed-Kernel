@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
-#define PTE_PRESENT  (1ULL<<0)
-#define PTE_WRITABLE (1ULL<<1)
+#define PTE_PRESENT     (1ULL<<0)
+#define PTE_WRITABLE    (1ULL<<1)
+#define PTE_PS          (1ULL<<7)
+
 
 static inline uint64_t read_cr3(){
     uint64_t cr3;

@@ -14,16 +14,15 @@ void kpanic(const char* reason) {
     serial_write("Reason: ");
     serial_write(reason);
     serial_write("\n");
-    kprintf("%s>>> KERNEL PANIC <<<%s\n", RED, RESET);
-    kprintf("%sReason: %s%s\n", RED, reason, RESET);
+    
+    kprintf("%s>>> KERNEL PANIC <<<%s\n", RGB_FG(255, 0, 0), RESET);
+    kprintf("%sReason: %s%s\n", RGB_FG(255, 0, 0), reason, RESET);
 
     dump_cpu_state(&cpu);
 
-    kprintf("%s>>> CPU Halted <<<%s\n", RED, RESET);
+    kprintf("%s>>> CPU Halted <<<%s\n", RGB_FG(255, 0, 0), RESET);
     
     for(;;){
         __asm__("hlt");
     }
-
-    __builtin_unreachable();
 }

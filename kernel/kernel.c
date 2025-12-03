@@ -9,10 +9,14 @@
 #include <mm/pmm.h>
 #include <mm/paging.h>
 #include <drivers/serial.h>
+#include <drivers/framebuffer/framebuffer.h>
+
+#define TTY_BACKGROUND  0, 10, 41
 
 void kmain(){
-    init_serial();
-    serial_write("Hello COM1, Starting Bleed.\n");
+    fb_fill(TTY_BACKGROUND);
+    set_tty_bg_colour(TTY_BACKGROUND);
+    set_tty_fg_colour(255, 255, 255);
 
     init_gdt();
     init_idt();

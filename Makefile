@@ -81,7 +81,7 @@ run: $(IMAGE_NAME).iso
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 	qemu-system-x86_64 \
-		-m 4G \
+		-m 16G \
 		-drive if=pflash,unit=0,format=raw,file=edk2-ovmf/ovmf-code-x86_64.fd,readonly=on \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \

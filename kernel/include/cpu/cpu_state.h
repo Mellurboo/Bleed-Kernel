@@ -20,7 +20,7 @@ typedef struct cpu_state {
         serial_write(#name "=");                                              \
         serial_write_hex((uint64_t)(value));                                  \
         serial_write("\n");                                                   \
-        kprintf(#name "=%s0x%p%s\t", CYAN, (void*)(value), RESET); \
+        kprintf(#name "=%s0x%p%s\t", RGB_FG(255, 255, 0), (void*)(value), RESET); \
     } while (0)
 
 
