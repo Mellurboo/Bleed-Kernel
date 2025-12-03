@@ -7,8 +7,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <panic.h>
+#include <mm/pmm.h>
 
-#define PAGE_SIZE       4096
 #define FRAME_USED      1
 #define FRAME_FREE      0
 
