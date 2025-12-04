@@ -1,4 +1,5 @@
 #include <lib/limine/limine.h>
+#include <drivers/serial.h>
 #include <mm/pmm.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -133,8 +134,11 @@ paddr_t alloc_pages(size_t page_count){
             entry_mark_unavailable(head, start, page_count);
             uintptr_t paddr = (((paddr_t)head) - hhdm->offset) + (start * PAGE_SIZE);
 
-            kprintf(LOG_OK "Page Allocated at 0x%p (physical: 0x%p)\n",
-                (paddr_to_vaddr(paddr)), paddr);
+            serial_write("Allocated ");
+            serial_write_hex(page_count);
+            serial_write(" Pages at ");
+            serial_write_hex(paddr);
+            serial_write("\n");
 
             return paddr;
         }

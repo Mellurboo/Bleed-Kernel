@@ -12,12 +12,9 @@
 #include <drivers/framebuffer/framebuffer.h>
 #include <fs/tempfs.h>
 
-#define TTY_BACKGROUND  0, 10, 41
-
 void kmain(){
-    fb_fill(TTY_BACKGROUND);
-    set_tty_bg_colour(TTY_BACKGROUND);
-    set_tty_fg_colour(255, 255, 255);
+    init_serial();
+    serial_write("Bleed Serial Output:\n");
 
     init_gdt();
     init_idt();
@@ -27,14 +24,10 @@ void kmain(){
     extend_paging();
 
     inode_t* root = tempfs_create_directory(NULL, "/");
-    inode_t* file = tempfs_create_file(root, "test.txt");
+    inode_t* initrd = init_initrd(root);
 
-    const char* file_content = "a file, in my kernel? it's not as unlikely as you'd think\0";
-    size_t w = tempfs_write(file, file_content, strlen(file_content), 0);
-
-    char buffer[64];
-    size_t bytes = tempfs_read(file, buffer, sizeof(buffer), 0);
-    kprintf("%s\n", buffer);
+    tempfs_list(root);
+    tempfs_list(initrd);
 
     for (;;) {}
     kpanic("KERNEL_FINISHED_EXECUTION");

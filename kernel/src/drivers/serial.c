@@ -1,18 +1,24 @@
 // for now i only want to write to serial but maybe recv later?
-
-#include <stdio.h>
-#include <stdint.h>
 #include <cpu/io.h>
-#include <ansii.h>
-#include <drivers/serial.h>
+#include <stdint.h>
 
 #define PORT_COM1   0x3F8
+#define SERIAL_TIMEOUT 100000
+
+static int serial_available = 0;
 
 static int is_serial_transmit_empty(){
     return inb(PORT_COM1 + 5) & 0x20;
 }
 
 int init_serial(){
+    outb(PORT_COM1 + 4, 0x0F);
+    uint8_t test = inb(PORT_COM1 + 4);
+    if (test != 0x0F) {
+        serial_available = 0;
+        return 1; // COM1 not available
+    }
+
     outb(PORT_COM1 + 1, 0x00);
     outb(PORT_COM1 + 3, 0x80);
     outb(PORT_COM1 + 0, 0x03);
@@ -24,28 +30,37 @@ int init_serial(){
     outb(PORT_COM1 + 0, 0xAE);
 
     if (inb(PORT_COM1 + 0) != 0xAE){
-        kprintf(LOG_ERROR "Failure to initialise serial port (COM1 %s)\n", PORT_COM1);
-        return 1;   // serial is "faulty"?
+        serial_available = 0;
+        return 1; // COM1 failed test
     }
 
     outb(PORT_COM1 + 4, 0x0F);
+    serial_available = 1;
     return 0;
 }
 
 void serial_write_char(char c){
-    while (!is_serial_transmit_empty()) { }
+    if (!serial_available) return;
+
+    uint32_t timeout = SERIAL_TIMEOUT;
+    while (!is_serial_transmit_empty() && timeout--) { }
+    if (timeout == 0) return;
+
     outb(PORT_COM1, c);
 }
 
 void serial_write(const char* str) {
+    if (!serial_available) return;
+
     while (*str) {
-        if (*str == '\n')
-            serial_write_char('\r');
+        if (*str == '\n') serial_write_char('\r');
         serial_write_char(*str++);
     }
 }
 
 void serial_write_hex(uint64_t value){
+    if (!serial_available) return;
+
     char buffer[17];
     const char* hex = "0123456789ABCDEF";
 
@@ -53,7 +68,6 @@ void serial_write_hex(uint64_t value){
         buffer[15-i] = hex[value & 0xF];
         value >>= 4;
     }
-
     buffer[16] = '\0';
     serial_write("0x");
     serial_write(buffer);

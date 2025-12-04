@@ -2,6 +2,26 @@
 #include <lib/limine/limine.h>
 
 __attribute__((used, section(".limine_requests")))
+struct limine_internal_module initrd_module = {
+    .string = "initrd_test.tar",
+    .path   = "initrd/initrd_test.tar",
+    .flags  = LIMINE_INTERNAL_MODULE_REQUIRED
+};
+
+__attribute__((used, section(".limine_requests")))
+struct limine_internal_module *internal_module_ptrs[] = {
+    &initrd_module
+};
+
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST_ID,
+    .revision = 1,
+    .internal_module_count = 1,
+    .internal_modules = internal_module_ptrs,
+};
+
+__attribute__((used, section(".limine_requests")))
 volatile struct limine_framebuffer_request framebuffer_request = {
     .id = LIMINE_FRAMEBUFFER_REQUEST_ID,
     .revision = 0

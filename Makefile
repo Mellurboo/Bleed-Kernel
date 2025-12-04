@@ -1,6 +1,7 @@
 IMAGE_NAME := bleed-kernel
 OBJDIR := bin/obj
 KERNEL_BIN := bin/bleed-kernel
+MODULES_DIR := initrd
 
 CC := cc
 LD := ld
@@ -57,7 +58,11 @@ edk2-ovmf:
 
 # remote stuff end
 
-$(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN)
+.PHONY: initrd
+initrd:
+	tar -cf initrd/initrd_test.tar initrd/initrd_test.txt
+
+$(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root
 	mkdir -p iso_root/boot
 	cp -v $(KERNEL_BIN) iso_root/boot/
@@ -66,6 +71,10 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN)
 	mkdir -p iso_root/EFI/BOOT
 	cp -v limine/BOOTX64.EFI iso_root/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI iso_root/EFI/BOOT/
+
+	mkdir -p iso_root/boot/initrd
+	cp -rv $(MODULES_DIR)/initrd_test.tar iso_root/boot/initrd/
+
 	xorriso -as mkisofs -R -r -J -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
 		-apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
@@ -92,3 +101,4 @@ clean:
 	rm -rf bin $(IMAGE_NAME).iso iso_root limine edk2-ovmf
 	find kernel klibc -name '*.o' -delete
 	find kernel klibc -name '*.d' -delete
+	find modules -name '*.tar' -delete
