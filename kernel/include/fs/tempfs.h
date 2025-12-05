@@ -32,8 +32,8 @@ typedef struct inode {
 inode_t* tempfs_create_file(inode_t* parent, const char* name);
 inode_t* tempfs_create_directory(inode_t* parent, const char* name);
 inode_t* tempfs_create_directory_recursive(inode_t* root, const char* path, bool strip_last);
-size_t tempfs_write(inode_t* file, const void* buffer, size_t size, size_t offset);
-size_t tempfs_read(inode_t* file, void* out_buffer, size_t size, size_t offset);
+long tempfs_write(inode_t* file, const void* buffer, size_t size, size_t offset);
+long tempfs_read(inode_t* file, void* out_buffer, size_t size, size_t offset);
 inode_t* tempfs_find_file(inode_t* root, const char* path);
 void tempfs_list(inode_t* dir);
 

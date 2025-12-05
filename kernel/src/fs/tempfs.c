@@ -8,11 +8,17 @@
 
 /// @brief allocate single page chunks for the linked list
 static struct chunk* alloc_chunk_page(void){
-    void* page = paddr_to_vaddr(alloc_pages(1));
-    struct chunk* chunk = (struct chunk*)page;
+    paddr_t p = alloc_pages(1);
+    if (!p) return NULL;
 
-    if (!chunk) return NULL;
-    memset(chunk, 0, PAGE_SIZE);
+    void* vpage = paddr_to_vaddr(p);
+    if (!vpage) {
+        free_pages(p, 1);
+        return NULL;
+    }
+
+    memset(vpage, 0, PAGE_SIZE);
+    struct chunk* chunk = (struct chunk*)vpage;
     chunk->next = NULL;
     return chunk;
 }
@@ -27,8 +33,11 @@ inode_t* tempfs_create_file(inode_t* parent, const char* name){
             return NULL;
     }
 
-    inode_t* file = (inode_t*)paddr_to_vaddr(alloc_pages(1));
-    if (!file) return NULL;
+    paddr_t p = alloc_pages(1);
+    kprintf("alloc_pages -> p = 0x%p\n", (void*)p);
+    if (!p) return NULL;
+    inode_t* file = (inode_t*)paddr_to_vaddr(p);
+    if (!file) { free_pages(p, 1); return NULL; }
     memset(file, 0, sizeof(inode_t));
 
     file->type = NODE_FILE;
@@ -93,7 +102,7 @@ static struct chunk* get_chunk(inode_t* file, size_t index){
 /// @param size size of write
 /// @param offset start write offset in bytes
 /// @return size that we wrote
-size_t tempfs_write(inode_t* file, const void* buffer, size_t size, size_t offset){
+long tempfs_write(inode_t* file, const void* buffer, size_t size, size_t offset){
     if (!file || file->type != NODE_FILE) return 0;
     if (size == 0) return 0;
 
@@ -135,7 +144,7 @@ size_t tempfs_write(inode_t* file, const void* buffer, size_t size, size_t offse
 /// @param size size to read
 /// @param offset start read offset (bytes)
 /// @return size that was read
-size_t tempfs_read(inode_t* file, void* out_buffer, size_t size, size_t offset){
+long tempfs_read(inode_t* file, void* out_buffer, size_t size, size_t offset){
     if (!file || file->type != NODE_FILE || !file->file_data) return 0;
     if (offset >= file->size) return 0;
 
@@ -168,7 +177,7 @@ size_t tempfs_read(inode_t* file, void* out_buffer, size_t size, size_t offset){
     return read_total;
 }
 
-static inode_t* tempfs_get_child_by_name(inode_t* parent, const char* cname){
+inode_t* tempfs_get_child_by_name(inode_t* parent, const char* cname){
     if (!parent || parent->type != NODE_DIRECTORY) return NULL;
     for (size_t i = 0; i < parent->child_count; i++){
         inode_t* child = parent->children[i];
@@ -223,10 +232,9 @@ inode_t* tempfs_create_directory_recursive(inode_t* root, const char* path, bool
 }
 
 inode_t* tempfs_find_file(inode_t* root, const char* path) {
-    if (!root || !path || path[0] == '\0') return NULL;
+    if (!root || !path || path[0] == '\0') return root;
     inode_t* current = root;
 
-    // Skip leading slashes
     while (*path == '/') path++;
 
     char buffer[256];
@@ -328,4 +336,99 @@ void tempfs_list(inode_t* dir) {
         size_t pages = (byte_size + PAGE_SIZE - 1) / PAGE_SIZE;
         free_pages(nodes_paddr, pages);
     }
+}
+
+static void tempfs_free_chunks(struct chunk* c) {
+    while (c) {
+        struct chunk* next = c->next;
+        paddr_t p = vaddr_to_paddr((void*)c);
+        memset(c, 0, PAGE_SIZE);
+        free_pages(p, 1);
+        c = next;
+    }
+}
+
+static int tempfs_remove_from_parent(inode_t* parent, inode_t* node) {
+    size_t idx = (size_t)-1;
+
+    for (size_t i = 0; i < parent->child_count; i++) {
+        if (parent->children[i] == node) {
+            idx = i;
+            break;
+        }
+    }
+    if (idx == (size_t)-1)
+        return -1;
+
+    for (size_t i = idx; i + 1 < parent->child_count; i++) {
+        parent->children[i] = parent->children[i + 1];
+    }
+    parent->children[parent->child_count - 1] = NULL;
+
+    parent->child_count--;
+    return 0;
+}
+
+int tempfs_delete_node(inode_t* parent, const char* name) {
+    if (!parent || parent->type != NODE_DIRECTORY)
+        return -1;
+
+    inode_t* target = tempfs_get_child_by_name(parent, name);
+    if (!target)
+        return -1;
+
+    // fail if directory not empty
+    if (target->type == NODE_DIRECTORY && target->child_count > 0)
+        return -2;
+
+    if (tempfs_remove_from_parent(parent, target) != 0)
+        return -1;
+
+    if (target->type == NODE_FILE && target->file_data)
+        tempfs_free_chunks((struct chunk*)target->file_data);
+
+    if (target->type == NODE_DIRECTORY && target->children) {
+        memset(target->children, 0, target->child_count);
+    }
+
+    paddr_t p = vaddr_to_paddr((void*)target);
+    memset(target, 0, sizeof(inode_t));
+    free_pages(p, 1);
+
+    return 0;
+}
+
+int tempfs_delete_node_recursive(inode_t* parent, const char* name) {
+    if (!parent || parent->type != NODE_DIRECTORY)
+        return -1;
+
+    inode_t* target = tempfs_get_child_by_name(parent, name);
+    if (!target)
+        return -1;
+ 
+    if (tempfs_remove_from_parent(parent, target) != 0)
+        return -1;
+
+    if (target->type == NODE_DIRECTORY) {
+        while (target->child_count > 0) {
+            inode_t* child = target->children[0];
+
+            // Recursively delete by name
+            tempfs_delete_node_recursive(target, child->name);
+        }
+
+        if (target->children)
+            memset(target->children, 0, target->child_count);
+    }
+
+    //free chunk chain, wlak the linked list
+    if (target->type == NODE_FILE && target->file_data)
+        tempfs_free_chunks((struct chunk*)target->file_data);
+
+    // Free inode itself
+    paddr_t p = vaddr_to_paddr((void*)target);
+    memset(target, 0, sizeof(inode_t));
+    free_pages(p, 1);
+
+    return 0;
 }

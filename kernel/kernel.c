@@ -26,8 +26,12 @@ void kmain(){
     inode_t* root = tempfs_create_directory(NULL, "/");
     inode_t* initrd = init_initrd(root);
 
-    tempfs_list(root);
     tempfs_list(initrd);
+    
+    inode_t* delete_test = tempfs_create_file(root, "delete_me.txt");
+    tempfs_list(root);
+    tempfs_delete_node(root, "delete_me.txt");
+    tempfs_list(root);
 
     for (;;) {}
     kpanic("KERNEL_FINISHED_EXECUTION");

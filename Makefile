@@ -101,4 +101,4 @@ clean:
 	rm -rf bin $(IMAGE_NAME).iso iso_root limine edk2-ovmf
 	find kernel klibc -name '*.o' -delete
 	find kernel klibc -name '*.d' -delete
-	find modules -name '*.tar' -delete
+	find initrd -name '*.tar' -delete

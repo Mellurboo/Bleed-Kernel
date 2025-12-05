@@ -23,6 +23,10 @@ static inline void* paddr_to_vaddr(paddr_t paddr){
     return (void*)(paddr + hhdm_request.response->offset);
 }
 
+static inline void* vaddr_to_paddr(paddr_t paddr){
+    return (void*)(paddr - hhdm_request.response->offset);
+}
+
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
