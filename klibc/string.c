@@ -76,8 +76,8 @@ int memcmp(const void *s1, const void *s2, uint64_t n) {
 /// @brief gets the length of a string
 /// @param string string to evaluate
 /// @return uint32 length
-uint32_t strlen(const char *string){
-    uint32_t length = 0;
+size_t strlen(const char *string){
+    size_t length = 0;
     while (*string != '\0'){
         length++;
         string++;

@@ -1,7 +1,7 @@
 #include <cpu/cpu_state.h>
 #include <stdio.h>
 
-void save_cpu_state(cpu_state_t* cpu) {
+inline void save_cpu_state(cpu_state_t* cpu) {
     __asm__ volatile(
         "mov %%rax, %0\n\t"
         "mov %%rbx, %1\n\t"

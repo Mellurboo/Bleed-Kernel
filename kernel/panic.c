@@ -3,6 +3,15 @@
 #include <stdio.h>
 #include <ansii.h>
 
+/*
+    this is bad and needs to be split
+        - CPU Generated Exceptions
+        - Kernel Generated Exceptions
+
+    for now RIP will always be save_cpu_state()
+    not the faulty call
+*/
+
 __attribute__((noreturn))
 void kpanic(const char* reason) {
     __asm__("cli");

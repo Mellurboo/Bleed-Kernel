@@ -9,6 +9,7 @@
 #include <string.h>
 #include <panic.h>
 #include <mm/pmm.h>
+#include <status.h>
 
 #define FRAME_USED      1
 #define FRAME_FREE      0
@@ -122,7 +123,7 @@ static int64_t bitmap_find_free(bitmap_entry_t* entry, size_t count){
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
 paddr_t alloc_pages(size_t page_count){
-    if (page_count == 0) return NULL;
+    if (page_count == 0) return 0;
     struct limine_hhdm_response* hhdm = hhdm_request.response;
     for (bitmap_entry_t* head = bitmap_head; head != NULL; head = head->next_entry){
         if (head->available_pages >= page_count){
@@ -143,7 +144,7 @@ paddr_t alloc_pages(size_t page_count){
             return paddr;
         }
     }
-    return NULL;
+    return -OUT_OF_MEMORY;
 }
 
 /// @brief frees the page(s)

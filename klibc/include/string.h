@@ -2,11 +2,12 @@
 #define STRING_H 1
 
 #include <stdint.h>
+#include <stddef.h>
 
 /// @brief gets the length of a string
 /// @param string string to evaluate
 /// @return uint32 length
-uint32_t strlen(const char *string);
+size_t strlen(const char *string);
 
 /// @brief compare two blocks of memory
 /// @param s1 block 1

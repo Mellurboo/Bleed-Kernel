@@ -6,7 +6,7 @@ MODULES_DIR := initrd
 CC := cc
 LD := ld
 
-CFLAGS := -g -O2 -Wall -Wextra -std=gnu11 \
+CFLAGS := -g -O2 -Wall -Wpedantic -Werror -Wextra -std=gnu11 \
           -nostdinc -ffreestanding -fno-stack-protector \
           -fno-stack-check -fno-lto -fno-PIC -fno-pie \
           -ffunction-sections -fdata-sections \
@@ -98,7 +98,7 @@ run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 
 .PHONY: clean
 clean:
-	rm -rf bin $(IMAGE_NAME).iso iso_root limine edk2-ovmf
+	rm -rf bin $(IMAGE_NAME).iso iso_root edk2-ovmf
 	find kernel klibc -name '*.o' -delete
 	find kernel klibc -name '*.d' -delete
 	find initrd -name '*.tar' -delete

@@ -34,11 +34,3 @@ struct flanterm_context *get_flanterm_context() {
 
     return ft_ctx;
 }
-
-void set_tty_fg_colour(uint8_t r, uint8_t g, uint8_t b) {
-    kprintf("\e[38;2;%u;%u;%um", r, g, b);
-}
-
-void set_tty_bg_colour(uint8_t r, uint8_t g, uint8_t b) {
-    kprintf("\e[48;2;%u;%u;%um", r, g, b);
-}

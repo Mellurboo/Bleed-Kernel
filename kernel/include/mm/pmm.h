@@ -23,8 +23,8 @@ static inline void* paddr_to_vaddr(paddr_t paddr){
     return (void*)(paddr + hhdm_request.response->offset);
 }
 
-static inline void* vaddr_to_paddr(paddr_t paddr){
-    return (void*)(paddr - hhdm_request.response->offset);
+static inline paddr_t vaddr_to_paddr(void* paddr){
+    return (paddr_t)((char*)paddr - hhdm_request.response->offset);
 }
 
 /// @brief allocate pages PMM

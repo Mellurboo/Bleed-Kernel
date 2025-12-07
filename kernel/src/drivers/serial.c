@@ -1,4 +1,8 @@
-// for now i only want to write to serial but maybe recv later?
+/*
+    this can be really funny on UEFI, and by that i mean it may cause the system
+    not to boot :/
+    for now i only want to write to serial but maybe recv later?
+*/
 #include <cpu/io.h>
 #include <stdint.h>
 

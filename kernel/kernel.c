@@ -10,9 +10,13 @@
 #include <mm/paging.h>
 #include <drivers/serial.h>
 #include <drivers/framebuffer/framebuffer.h>
-#include <fs/tempfs.h>
+#include <fs/vfs.h>
+#include <status.h>
 
-void kmain(){
+#define MESSAGE "hello world\n"
+
+void kmain()
+{
     init_serial();
     serial_write("Bleed Serial Output:\n");
 
@@ -23,15 +27,22 @@ void kmain(){
     init_pmm();
     extend_paging();
 
-    inode_t* root = tempfs_create_directory(NULL, "/");
-    inode_t* initrd = init_initrd(root);
+    vfs_mount_root();
 
-    tempfs_list(initrd);
-    
-    inode_t* delete_test = tempfs_create_file(root, "delete_me.txt");
-    tempfs_list(root);
-    tempfs_delete_node(root, "delete_me.txt");
-    tempfs_list(root);
+    INode_t *testfile;
+    path_t testfilepath = path_from_abs("test");
+    long e = vfs_create(&testfilepath, &testfile, false);
+    if (e < 0) kprintf(LOG_ERROR "Failure to create file error: %d\n", status_to_string(-e));
+
+    e = inode_write(testfile, MESSAGE, strlen(MESSAGE), 0);
+    if (e < 0) kprintf(LOG_ERROR "Failure writing to file %s error: %s\n", testfile->internal_data, status_to_string(-e));
+
+    char buffer[sizeof(MESSAGE)];
+    long r = inode_read(testfile, buffer, sizeof(buffer), 0);
+    if (r < 0) kprintf(LOG_ERROR "Failure reading file %s error: %s\n", testfile->internal_data, status_to_string(-e));
+    buffer[r] = '\0';
+
+    kprintf("(%s) %s", testfile->internal_data, buffer);
 
     for (;;) {}
     kpanic("KERNEL_FINISHED_EXECUTION");
