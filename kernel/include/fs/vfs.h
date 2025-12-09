@@ -13,6 +13,7 @@ typedef struct INodeOps{
     long (*write)   (INode_t* inode, const void* in_buffer, size_t size, size_t offset);
     int  (*lookup)  (INode_t* dir, const char* name, size_t name_length, INode_t** result);
     void (*drop)    (INode_t* inode);
+    int  (*readdir) (INode_t* dir, size_t index, INode_t** result);
 } INodeOps_t;
 
 enum {
@@ -21,7 +22,7 @@ enum {
 };
 
 typedef struct INode {
-    size_t  shared;
+    long  shared;
     int     type;
     const   INodeOps_t* ops;
     void*   internal_data;
@@ -47,6 +48,7 @@ void inode_drop(INode_t* inode);
 
 int vfs_lookup(const path_t* path, INode_t** inode);
 int vfs_create(const path_t* path, INode_t** result, bool is_directory);
+int vfs_readdir (INode_t* dir, size_t index, INode_t** result);
 void vfs_drop(INode_t* inode);
 path_t path_from_abs(const char* pstring);
 path_t parent_path(const path_t* path);

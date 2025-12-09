@@ -7,7 +7,6 @@
 #include <ansii.h>
 #include <stddef.h>
 #include <string.h>
-#include <panic.h>
 #include <mm/pmm.h>
 #include <status.h>
 
@@ -21,7 +20,6 @@ static bitmap_entry_t* bitmap_head = NULL;
 
 uintptr_t get_max_paddr(){
     struct limine_memmap_response *mmap = memmap_request.response;
-    if (!mmap) kpanic("MEMORY_MAP_NOT_AVAILABLE");
 
     uint64_t max = 0;
     for (uint64_t i = 0; i < mmap->entry_count; i++){
@@ -40,7 +38,6 @@ uintptr_t get_max_paddr(){
 /// @return unsigned 64 memory size in bytes
 size_t get_usable_pmem_size(){
     struct limine_memmap_response* mmap = memmap_request.response;
-    if (!mmap) kpanic("MEMORY_MAP_NOT_AVAILABLE");
 
     size_t bytes = 0;
     for (size_t i = 0; i < mmap->entry_count; i++){

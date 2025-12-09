@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <status.h>
 #include <stdbool.h>
+
 extern const filesystem tempfs;
 
 INode_t* vfs_root = NULL;
@@ -13,6 +14,7 @@ int vfs_mount_root(){
     if (r < 0) {
         kprintf(LOG_ERROR "vfs_mount_root: tempfs.mount failed: %d\n", r);
     }
+    kprintf(LOG_OK "VFS Root Mounted\n");
     return r;
 }
 
@@ -21,9 +23,10 @@ INode_t* vfs_get_root(){
 }
 
 void vfs_drop(INode_t* inode){
-    if (inode->shared--){
-        inode_drop(inode);
-    }
+    if (!inode) return;
+    if (inode == vfs_get_root()) return;
+    if (inode->shared == 0) return;
+    inode->shared--;
 }
 
 int vfs_lookup(const path_t* path, INode_t** inode){
@@ -43,13 +46,13 @@ int vfs_lookup(const path_t* path, INode_t** inode){
 
         current_inode = next;
     }
+    if (current_inode) current_inode->shared++;
     *inode = current_inode;
     return 0;
 }
 
 int vfs_create(const path_t* path, INode_t** result, bool is_directory){
     INode_t* parent_inode = NULL;
-
     path_t parent = parent_path(path);
 
     int e = vfs_lookup(&parent, &parent_inode);
@@ -107,4 +110,9 @@ long inode_write(INode_t* inode, const void* in_buffer, size_t count, size_t off
 long inode_read(INode_t* inode, void* out_buffer, size_t count, size_t offset){
     if (inode->ops->read == NULL) return -UNIMPLEMENTED;
     return inode->ops->read(inode, out_buffer, count, offset);
+}
+
+int vfs_readdir (INode_t* dir, size_t index, INode_t** result){
+    if(!dir || !dir->ops->readdir) return -UNIMPLEMENTED;
+    return dir->ops->readdir(dir, index, result);
 }

@@ -6,7 +6,6 @@
 #include <mm/paging.h>
 #include <ansii.h>
 #include <lib/limine/limine.h>
-#include <panic.h>
 #include <drivers/serial.h>
 
 #define PAGE_SIZE_4K       4096
@@ -42,7 +41,6 @@ uint64_t write_table_entry(uint64_t* table, size_t index, uint64_t flags) {
 void walk_page_tables(uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_index) {
     uint64_t cr3 = read_cr3() & PADDR_ENTRY_MASK;
     uint64_t* pml4_vaddr = (uint64_t*)paddr_to_vaddr(cr3);
-    if (!pml4_vaddr) kpanic("CR3 does not point to HHDM region");
 
     size_t pml4_index = (vaddr >> 39) & 0x1FF;
     size_t pdpt_index = (vaddr >> 30) & 0x1FF;
@@ -71,7 +69,6 @@ void map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
 
 void extend_paging() {
     struct limine_memmap_response* mmap = memmap_request.response;
-    if (!mmap) kpanic("Memory Map unavailable during paging sequence");
 
     kprintf(LOG_INFO "Paging: memmap entry count = %zu\n", mmap->entry_count);
 

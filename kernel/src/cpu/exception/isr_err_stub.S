@@ -1,100 +1,169 @@
+.intel_syntax noprefix
+.text
+
+.macro ISR_NO_ERR v
+.globl isr_\v
 .extern ke_exception_handler
+.type isr_\v,@function
+isr_\v:
+    push 0
+    push \v
 
-.macro isr_err_stub num
-isr_stub_\num:
-    push %rax
-    push %rbx
-    push %rcx
-    push %rdx
-    push %rbp
-    push %rsi
-    push %rdi
-    push %r8
-    push %r9
-    push %r10
-    push %r11
-    push %r12
-    push %r13
-    push %r14
-    push %r15
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
 
-    mov $\num, %rdi
+    mov rdi, rsp
     call ke_exception_handler
-.endm
 
-.macro isr_no_err_stub num
-isr_stub_\num:
-    mov $\num, %rdi
-    call ke_exception_handler
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+
+    add rsp, 8
+    add rsp, 8
+
     iretq
+.size isr_\v, .-isr_\v
 .endm
 
-isr_no_err_stub 0
-isr_no_err_stub 1
-isr_no_err_stub 2
-isr_no_err_stub 3
-isr_no_err_stub 4
-isr_no_err_stub 5
-isr_no_err_stub 6
-isr_no_err_stub 7
-isr_err_stub    8
-isr_no_err_stub 9
-isr_err_stub    10
-isr_err_stub    11
-isr_err_stub    12
-isr_err_stub    13
-isr_err_stub    14
-isr_no_err_stub 15
-isr_no_err_stub 16
-isr_err_stub    17
-isr_no_err_stub 18
-isr_no_err_stub 19
-isr_no_err_stub 20
-isr_no_err_stub 21
-isr_no_err_stub 22
-isr_no_err_stub 23
-isr_no_err_stub 24
-isr_no_err_stub 25
-isr_no_err_stub 26
-isr_no_err_stub 27
-isr_no_err_stub 28
-isr_no_err_stub 29
-isr_err_stub    30
-isr_no_err_stub 31
+.macro ISR_ERR v
+.globl isr_\v
+.type isr_\v,@function
+isr_\v:
+    push \v
 
-// yeah fuck assembly macros whatever
-.global isr_stub_table
-.section .rodata
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov rdi, rsp
+    mov rsp, rdi
+    call ke_exception_handler
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+
+    add rsp, 8
+
+    iretq
+.size isr_\v, .-isr_\v
+.endm
+
+ISR_NO_ERR 0
+ISR_NO_ERR 1
+ISR_NO_ERR 2
+ISR_NO_ERR 3
+ISR_NO_ERR 4
+ISR_NO_ERR 5
+ISR_NO_ERR 6
+ISR_NO_ERR 7
+ISR_ERR 8
+ISR_NO_ERR 9
+ISR_ERR 10
+ISR_ERR 11
+ISR_ERR 12
+ISR_ERR 13
+ISR_ERR 14
+ISR_NO_ERR 15
+ISR_NO_ERR 16
+ISR_ERR 17
+ISR_NO_ERR 18
+ISR_NO_ERR 19
+ISR_NO_ERR 20
+ISR_NO_ERR 21
+ISR_NO_ERR 22
+ISR_NO_ERR 23
+ISR_NO_ERR 24
+ISR_NO_ERR 25
+ISR_NO_ERR 26
+ISR_NO_ERR 27
+ISR_NO_ERR 28
+ISR_NO_ERR 29
+ISR_NO_ERR 30
+ISR_NO_ERR 31
+
+.align 8
+.globl isr_stub_table
 isr_stub_table:
-    .quad isr_stub_0
-    .quad isr_stub_1
-    .quad isr_stub_2
-    .quad isr_stub_3
-    .quad isr_stub_4
-    .quad isr_stub_5
-    .quad isr_stub_6
-    .quad isr_stub_7
-    .quad isr_stub_8
-    .quad isr_stub_9
-    .quad isr_stub_10
-    .quad isr_stub_11
-    .quad isr_stub_12
-    .quad isr_stub_13
-    .quad isr_stub_14
-    .quad isr_stub_15
-    .quad isr_stub_16
-    .quad isr_stub_17
-    .quad isr_stub_18
-    .quad isr_stub_19
-    .quad isr_stub_20
-    .quad isr_stub_21
-    .quad isr_stub_22
-    .quad isr_stub_23
-    .quad isr_stub_24
-    .quad isr_stub_25
-    .quad isr_stub_26
-    .quad isr_stub_27
-    .quad isr_stub_28
-    .quad isr_stub_29
-    .quad isr_stub_30
-    .quad isr_stub_31
+    .quad isr_0
+    .quad isr_1
+    .quad isr_2
+    .quad isr_3
+    .quad isr_4
+    .quad isr_5
+    .quad isr_6
+    .quad isr_7
+    .quad isr_8
+    .quad isr_9
+    .quad isr_10
+    .quad isr_11
+    .quad isr_12
+    .quad isr_13
+    .quad isr_14
+    .quad isr_15
+    .quad isr_16
+    .quad isr_17
+    .quad isr_18
+    .quad isr_19
+    .quad isr_20
+    .quad isr_21
+    .quad isr_22
+    .quad isr_23
+    .quad isr_24
+    .quad isr_25
+    .quad isr_26
+    .quad isr_27
+    .quad isr_28
+    .quad isr_29
+    .quad isr_30
+    .quad isr_31
