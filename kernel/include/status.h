@@ -7,6 +7,7 @@ typedef enum error_code {
     UNIMPLEMENTED,
     NAME_LIMITS,
     FILE_NOT_FOUND,
+    TAR_EXTRACT_FAILURE,
 
     ERROR_CODES_COUNT,
 } error_code_t;

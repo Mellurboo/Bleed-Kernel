@@ -12,17 +12,35 @@
 #include <string.h>
 #include <stdarg.h>
 #include <lib/nanoprintf.h>
+#include <mm/heap.h>
 
 /// @brief formatted print to tty
 /// @param s string
 void kprintf(const char *fmt, ...){
-    char buf[1024];      // TODO make dynamic later
-    
-    va_list args;
-    va_start(args, fmt);
+    size_t size = 256;
+    char *buf = NULL;
 
-    npf_vsnprintf(buf, sizeof(buf), fmt, args);
-    va_end(args);
+    while (1) {
+        buf = kmalloc(size);
+        if (!buf) return;
+
+        va_list args;
+        va_start(args, fmt);
+        int written = npf_vsnprintf(buf, size, fmt, args);
+        va_end(args);
+
+        if (written < 0) {
+            kfree(buf, size);
+            return;
+        }
+
+        if ((size_t)written < size) {
+            break;
+        }
+        kfree(buf, size);
+        size = size * 2;
+    }
 
     flanterm_write(get_flanterm_context(), buf, strlen(buf));
+    kfree(buf, size);
 }

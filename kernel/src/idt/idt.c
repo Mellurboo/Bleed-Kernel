@@ -34,7 +34,7 @@ void init_idt(){
     }
     
     __asm__ volatile ("lidt %0" : : "m"(idt_ptr));
-    kprintf(LOG_OK "Interrupt Descriptor Table Loaded (IDTR=%p)\n", idt_ptr.address);
+    kprintf(LOG_OK "Interrupt Descriptor Table Loaded (IDTR=0x%p)\n", idt_ptr.address);
     __asm__ volatile ("sti");
     kprintf(LOG_OK "Interrupts Enabled!\n");
 }

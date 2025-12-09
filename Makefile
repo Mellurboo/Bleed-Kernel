@@ -60,7 +60,7 @@ edk2-ovmf:
 
 .PHONY: initrd
 initrd:
-	tar -cf initrd/initrd_test.tar initrd/initrd_test.txt
+	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root

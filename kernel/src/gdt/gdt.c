@@ -31,5 +31,5 @@ void init_gdt(){
     gdt_ptr.length  = ((sizeof(struct gdt_entry_t) * 7) - 1);
 
     load_gdt(&gdt_ptr);
-    kprintf(LOG_OK "Global Descriptor Table Loaded (GDTR=%p)\n", gdt_ptr.address);
+    kprintf(LOG_OK "Global Descriptor Table Loaded (GDTR=0x%p)\n", gdt_ptr.address);
 }

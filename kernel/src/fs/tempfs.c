@@ -134,27 +134,42 @@ long tempfs_read(INode_t* inode, void* out_buffer, size_t count, size_t offset){
 /// @return write size (negitive indicates failure) 
 long tempfs_write(INode_t* inode, const void* in_buffer, size_t count, size_t offset){
     tempfs_INode_t* tempfs_inode = inode->internal_data;
-    tempfs_data_t** previous_next = &tempfs_inode->data, *data = tempfs_inode->data;
+    tempfs_data_t** previous_next = &tempfs_inode->data;
+    tempfs_data_t* data = tempfs_inode->data;
 
-    if (offset > tempfs_inode->capacity) return -OUT_OF_BOUNDS; // out of bounds
-    while(data && offset >= MAX_FILE_DATA_PER_CHUNK){
+    if (offset > tempfs_inode->capacity) return -OUT_OF_BOUNDS;
+
+    // Skip chunks until we reach the right offset
+    while (data && offset >= MAX_FILE_DATA_PER_CHUNK){
         offset -= MAX_FILE_DATA_PER_CHUNK;
         previous_next = &data->next_chunk;
         data = data->next_chunk;
     }
-    for (size_t i = 0; i < count; i += MAX_FILE_DATA_PER_CHUNK - offset){
-        size_t write_remaining = count - i < (MAX_FILE_DATA_PER_CHUNK - offset) ? count - i : (MAX_FILE_DATA_PER_CHUNK - offset);
+
+    size_t written_total = 0;
+
+    while (written_total < count){
         if (!data){
             data = *previous_next = new_data_chunk();
-            if (!data) return -OUT_OF_MEMORY;   // out of memory
+            if (!data) return -OUT_OF_MEMORY;
         }
-        memcpy(file_data(data) + offset, in_buffer, write_remaining);
+
+        size_t chunk_space = MAX_FILE_DATA_PER_CHUNK - offset;
+        size_t write_now = (count - written_total < chunk_space) ? (count - written_total) : chunk_space;
+
+        memcpy(file_data(data) + offset, (uint8_t*)in_buffer + written_total, write_now);
+
+        written_total += write_now;
         offset = 0;
         previous_next = &data->next_chunk;
         data = data->next_chunk;
     }
-    if (tempfs_inode->capacity < count + offset) tempfs_inode->capacity = count + offset;
-    return count;
+
+    // Update inode capacity correctly
+    if (tempfs_inode->capacity < offset + written_total)
+        tempfs_inode->capacity = offset + written_total;
+
+    return (long)written_total;
 }
 
 /// @brief Create a new file inside a directory

@@ -10,7 +10,7 @@ A 64-bit Operating System in C using the Limine Bootloader for UEFI and BIOS sys
 - [x]  Vaddr Paddr Conversion
 - [x]  Paging Allocation
 - [x]  TempFS + VFS
-- [ ]  initrd
+- [x]  initrd
 - [ ]  uACPI integration
 - [ ]  APIC
 - [ ]  LAPIC

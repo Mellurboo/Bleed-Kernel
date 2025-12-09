@@ -87,6 +87,25 @@ path_t path_from_abs(const char* path){
     };
 }
 
+/// @brief read the files into a buffer and count the size
+/// @param inode target
+/// @return unsigned size
+size_t vfs_filesize(INode_t* inode) {
+    if (!inode || !inode->ops->read) return 0;
+
+    size_t total = 0;
+    size_t offset = 0;
+    char buffer[4096];
+    long r;
+
+    while ((r = inode_read(inode, buffer, sizeof(buffer), offset)) > 0) {
+        total += r;
+        offset += r;
+    }
+
+    return total;
+}
+
 int inode_create(INode_t* parent, const char* name, size_t namelen, INode_t** result, bool is_directory){
     if (parent->ops->create == NULL) return -UNIMPLEMENTED;
     return parent->ops->create(parent, name, namelen, result, is_directory);

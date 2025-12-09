@@ -25,6 +25,7 @@ void list_directory(const char* path_str) {
 
         kprintf("%s%s  ", child->type == INODE_DIRECTORY ? CYAN_FG : "", child->internal_data);
         if (child->type == INODE_DIRECTORY) kprintf(CYAN_FG);
+        kprintf("%s", RESET);
     }
     kprintf("\n");
     vfs_drop(dir);
