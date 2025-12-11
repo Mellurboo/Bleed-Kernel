@@ -4,7 +4,6 @@
 #include <vendor/limine/limine.h>
 #include <stdio.h>
 
-
 extern volatile struct limine_framebuffer_request framebuffer_request;
 
 struct flanterm_context *get_flanterm_context() {

@@ -11,22 +11,16 @@ A 64-bit Operating System in C using the Limine Bootloader for UEFI and BIOS sys
 - [x]  Paging Allocation
 - [x]  TempFS + VFS
 - [x]  initrd
-- [ ]  uACPI integration
+- [x]  PIC
+- [ ]  PIT
+- [ ]  Schedular (round robin)
+- [ ]  Kernel Thread Context Switcher
+- [ ]  ELF Loading
+- [ ]  ACPI
 - [ ]  APIC
-- [ ]  LAPIC
-- [ ]  Scheduler
-- [ ]  Basic Program Spawning (fork)
-- [ ]  Context Switching
-- [ ]  Userspace Code
-- [ ]  Syscalls
-- [ ]  Devices (or equivilant depending on what I want to do)
-- [ ]  Usermode Libc
-- [ ]  Implement more syscalls as we go porting stuff
-- [ ]  Basic PS/2 kbd driver for shell interaction on real hardware
-- [ ]  Dynamic Linking / CC for OS Software
-- [ ]  Meaty VMM (page swapping etc.)
-- [ ]  Various drivers (NVMe, USB etc...)
-- [ ]  Persistent filesystems (ext2 probably)
+- [ ]  SMP
+
+ill plan more as i go along!
 
 ## Run Locally
 

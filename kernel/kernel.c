@@ -54,12 +54,13 @@ void kmain() {
     init_gdt();
     init_idt();
     init_sse();
+
     kprintf(LOG_INFO "Physical Memory: %lluMiB\n", get_usable_pmem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", get_max_paddr());
+
     extend_paging();
     vfs_mount_root();
     load_initrd();
-    list_directory("initrd");
 
     splash();
     shell_start();
