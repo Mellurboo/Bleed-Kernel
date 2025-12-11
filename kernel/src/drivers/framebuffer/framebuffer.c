@@ -1,8 +1,9 @@
-#include <lib/flanterm/impl/fb.h>
-#include <lib/flanterm/flanterm.h>
-#include <lib/flanterm/flanterm.h>
-#include <lib/limine/limine.h>
+#include <vendor/flanterm/impl/fb.h>
+#include <vendor/flanterm/flanterm.h>
+#include <vendor/flanterm/flanterm.h>
+#include <vendor/limine/limine.h>
 #include <stdio.h>
+
 
 extern volatile struct limine_framebuffer_request framebuffer_request;
 
@@ -33,4 +34,8 @@ struct flanterm_context *get_flanterm_context() {
     }
 
     return ft_ctx;
+}
+
+void* get_framebuffer_addr(){
+    return framebuffer_request.response->framebuffers[0]->address;
 }

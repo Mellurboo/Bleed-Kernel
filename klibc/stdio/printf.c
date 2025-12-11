@@ -8,7 +8,7 @@
 #define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS           0
 
 #include <drivers/framebuffer/framebuffer.h>
-#include <lib/flanterm/flanterm.h>
+#include <vendor/flanterm/flanterm.h>
 #include <string.h>
 #include <stdarg.h>
 #include <lib/nanoprintf.h>

@@ -1,9 +1,10 @@
 .intel_syntax noprefix
 .text
 
+.extern ke_exception_handler
+
 .macro ISR_NO_ERR v
 .globl isr_\v
-.extern ke_exception_handler
 .type isr_\v,@function
 isr_\v:
     push 0
@@ -26,7 +27,6 @@ isr_\v:
     push r15
 
     mov rdi, rsp
-    call ke_exception_handler
 
     pop r15
     pop r14
@@ -167,3 +167,90 @@ isr_stub_table:
     .quad isr_29
     .quad isr_30
     .quad isr_31
+
+
+.macro IRQ_STUB irq vector
+.globl irq\irq
+.extern irq_handler
+.type irq\irq,@function
+irq\irq:
+    push 0 
+    push \vector
+
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov rdi, \irq
+    lea rsi, [rsp]
+    call irq_handler
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+
+    add rsp, 16         # pop vector + fake error code
+    iretq
+.size irq\irq, .-irq\irq
+.endm
+
+IRQ_STUB 0, 32
+IRQ_STUB 1, 33
+IRQ_STUB 2, 34
+IRQ_STUB 3, 35
+IRQ_STUB 4, 36
+IRQ_STUB 5, 37
+IRQ_STUB 6, 38
+IRQ_STUB 7, 39
+IRQ_STUB 8, 40
+IRQ_STUB 9, 41
+IRQ_STUB 10, 42
+IRQ_STUB 11, 43
+IRQ_STUB 12, 44
+IRQ_STUB 13, 45
+IRQ_STUB 14, 46
+IRQ_STUB 15, 47
+
+.align 8
+.globl irq_stub_table
+irq_stub_table:
+    .quad irq0
+    .quad irq1
+    .quad irq2
+    .quad irq3
+    .quad irq4
+    .quad irq5
+    .quad irq6
+    .quad irq7
+    .quad irq8
+    .quad irq9
+    .quad irq10
+    .quad irq11
+    .quad irq12
+    .quad irq13
+    .quad irq14
+    .quad irq15

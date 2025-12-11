@@ -5,8 +5,8 @@
 #include <mm/pmm.h>
 #include <mm/paging.h>
 #include <ansii.h>
-#include <lib/limine/limine.h>
-#include <drivers/serial.h>
+#include <vendor/limine/limine.h>
+#include <drivers/serial/serial.h>
 
 #define PAGE_SIZE_4K       4096
 #define PAGE_SIZE_2M       (512 * PAGE_SIZE_4K)

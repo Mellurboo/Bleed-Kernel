@@ -9,8 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <ansii.h>
-#include <panic.h>
-#include <cpu/cpu_state.h>
+#include <drivers/serial/serial.h>
 
 struct isr_stackframe {
     uint64_t rax;
@@ -54,7 +53,6 @@ void print_stack_trace(uint64_t *rbp) {
     serial_write("\nStack Trace:\n");
 
     for (int i = 0; i < 16 && rbp; i++) {
-        // Sanity check: RBP should be aligned and not null
         if ((uint64_t)rbp < 0x1000 || ((uint64_t)rbp & 0xF)) break;
 
         uint64_t rip = rbp[1];

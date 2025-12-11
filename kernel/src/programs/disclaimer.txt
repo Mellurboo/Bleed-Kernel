@@ -1,0 +1,6 @@
+EVERYTHING HERE IS TEMPORARY AND IS JUST IN PLACE TO HELP BEFORE
+I DO AN ELF LOADER
+
+i dont plan on doing anything more than a primitive temporary shell
+
+thx

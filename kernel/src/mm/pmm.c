@@ -1,5 +1,5 @@
-#include <lib/limine/limine.h>
-#include <drivers/serial.h>
+#include <vendor/limine/limine.h>
+#include <drivers/serial/serial.h>
 #include <mm/pmm.h>
 #include <stdio.h>
 #include <stdint.h>

@@ -1,22 +1,25 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <ansii.h>
-#include <lib/limine/limine.h>
+#include <vendor/limine/limine.h>
 #include <gdt/gdt.h>
 #include <idt/idt.h>
 #include <string.h>
-#include <panic.h>
 #include <mm/pmm.h>
 #include <mm/heap.h>
 #include <mm/paging.h>
-#include <drivers/serial.h>
+#include <drivers/serial/serial.h>
+#include <drivers/pic/pic.h>
 #include <drivers/framebuffer/framebuffer.h>
+#include <programs/shell/tempshell.h>
 #include <fs/vfs.h>
 #include <status.h>
 #include <fs/fsutils.h>
 #include <fs/archive/tar.h>
 
 extern volatile struct limine_module_request module_request;
+extern void init_sse(void);
+
 void load_initrd(){ 
     if (!module_request.response || module_request.response->module_count == 0){
         kprintf(LOG_ERROR "No Modules loaded by Bootloader\n");
@@ -46,9 +49,11 @@ void kmain() {
     init_pmm();
     init_serial();
     serial_write("Bleed Serial Output:\n");
+    init_pic(32, 40);
 
     init_gdt();
     init_idt();
+    init_sse();
     kprintf(LOG_INFO "Physical Memory: %lluMiB\n", get_usable_pmem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", get_max_paddr());
     extend_paging();
@@ -57,7 +62,7 @@ void kmain() {
     list_directory("initrd");
 
     splash();
+    shell_start();
 
     for (;;){}
-    kpanic("KERNEL_FINISHED_EXECUTION");
 }

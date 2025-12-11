@@ -1,7 +1,7 @@
 #ifndef ASCII_H
 #define ASCII_H 1
 
-#define RESET "\x1b[39m"
+#define RESET "\033[39m"
 #define FG_RESET "\x1b[39m"
 
 #define RGB_FG(r,g,b) "\x1b[38;2;" #r ";" #g ";" #b "m"
