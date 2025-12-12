@@ -18,6 +18,7 @@
 #include <fs/fsutils.h>
 #include <fs/archive/tar.h>
 #include <sys/sleep.h>
+#include <fonts/psf.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
@@ -49,6 +50,7 @@ void splash(){
 }
 
 void kmain() {
+    set_flanterm_context(NULL, 0, 0, false);
     init_pmm();
     init_serial();
     serial_write("Bleed Serial Output:\n");
@@ -65,6 +67,8 @@ void kmain() {
     extend_paging();
     vfs_mount_root();
     load_initrd();
+
+    psf_init();
 
     splash();
     shell_start();

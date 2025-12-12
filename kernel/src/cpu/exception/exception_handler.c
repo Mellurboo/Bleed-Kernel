@@ -81,6 +81,8 @@ extern void ke_exception_handler(void *frame){
     serial_write_hex(vector);
     serial_write("\n");
     serial_write_hex(f->rip);
+    serial_write("\n");
+    asm volatile("hlt");
 
     kprintf("\n");
     kprintf(RED_FG "===============================================\n");
