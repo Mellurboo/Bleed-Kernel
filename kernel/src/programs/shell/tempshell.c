@@ -18,7 +18,7 @@ static int pos = 0;
 
 static void run_command(const char *cmd) {
     if (strcmp(cmd, "help") == 0) {
-        kprintf("Shitty Shell (tm) Commands:\n", RGB_FG(133, 204, 100), RESET);
+        kprintf("%sShitty Shell (tm)%s Commands:\n", RGB_FG(133, 204, 100), RESET);
         kprintf("%shelp:%s display this help message\n", RGB_FG(133, 204, 100), RESET);
         kprintf("%secho:%s print the message following\n", RGB_FG(133, 204, 100), RESET);
         kprintf("%shalt:%s disables interrupts and stops the cpu\n", RGB_FG(133, 204, 100), RESET);

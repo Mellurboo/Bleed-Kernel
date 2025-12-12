@@ -4,6 +4,6 @@
 /// @brief kernel tty print formatted string
 /// @param fmt string
 /// @param vardic argument list
-void kprintf(const char *fmt, ...);
+void kprintf(const char *fmt, ...)__attribute__((format(printf,1,2)));
 
 #endif

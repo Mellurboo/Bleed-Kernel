@@ -113,7 +113,7 @@ int tar_extract(const void* tar_data, size_t tar_size){
         int res = vfs_create(&final_path, &inode, is_dir);
 
         if (res < 0){
-            kprintf(LOG_ERROR "Tar extract failure: %s (offset %llu)\n",
+            kprintf(LOG_ERROR "Tar extract failure: %s (offset %lu)\n",
                     header->name, offset);
             return -TAR_EXTRACT_FAILURE;
         }

@@ -1,6 +1,7 @@
 #include <cpu/io.h>
 #include <stdio.h>
 #include <drivers/ps2/ps2_keyboard.h>
+#include <drivers/pit/pit.h>
 
 #define PIC1        0x20    // Master PIC
 #define PIC2        0xA0    // Slave PIC
@@ -11,6 +12,9 @@
 
 #define ICW1_INIT   0x11
 #define ICW4_8086   0x01
+
+volatile uint64_t timer_ticks;
+volatile uint64_t pit_countdown = 0;
 
 /// @brief remaps the pic
 /// @param master_offset remap offset for the master pic
@@ -49,9 +53,12 @@ void pic_eoi(uint8_t irq){
     }
 }
 //extern void irq_handler(uint8_t irq, regs_t *r) <- we will need this later, but for now ill leave it here
-extern void irq_handler(uint8_t irq) {
+void irq_handler(uint8_t irq) {
     switch (irq) {
         case 0:
+            timer_ticks++;
+            if (pit_countdown > 0)
+                pit_countdown--;
             break;
         case 1:
             ps2_keyboard_irq(irq);

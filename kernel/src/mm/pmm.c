@@ -89,7 +89,7 @@ uint8_t init_pmm() {
         size_t bitmap_header_page_size = PAGE_ALIGN_UP(sizeof(bitmap_entry_t) + (bmentry->capacity + 7) / 8) / PAGE_SIZE;
         entry_mark_unavailable(bmentry, 0, bitmap_header_page_size);
     
-        kprintf(LOG_OK "Usable Space Bitmap created: 0x%p | %llu Pages (%llu KiB) | Available Pages: %llu\n", (void *)bmentry, bmentry->capacity, ((bmentry->capacity)*PAGE_SIZE)/1024, bmentry->available_pages);
+        kprintf(LOG_OK "Usable Space Bitmap created: 0x%p | %lu Pages (%lu KiB) | Available Pages: %lu\n", (void *)bmentry, bmentry->capacity, ((bmentry->capacity)*PAGE_SIZE)/1024, bmentry->available_pages);
     }
 
     kprintf(LOG_OK "PMM Initialised\n");

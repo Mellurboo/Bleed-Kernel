@@ -70,7 +70,7 @@ void map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
 void extend_paging() {
     struct limine_memmap_response* mmap = memmap_request.response;
 
-    kprintf(LOG_INFO "Paging: memmap entry count = %zu\n", mmap->entry_count);
+    kprintf(LOG_INFO "Paging: memmap entry count = %llu\n", mmap->entry_count);
 
     for (size_t i = 0; i < mmap->entry_count; i++) {
         struct limine_memmap_entry* entry = mmap->entries[i];

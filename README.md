@@ -12,8 +12,9 @@ A 64-bit Operating System in C using the Limine Bootloader for UEFI and BIOS sys
 - [x]  TempFS + VFS
 - [x]  initrd
 - [x]  PIC
-- [ ]  PIT
+- [x]  PIT
 - [ ]  Schedular (round robin)
+- [ ]  Review Kernel Code (Quality Assurance)
 - [ ]  Kernel Thread Context Switcher
 - [ ]  ELF Loading
 - [ ]  ACPI

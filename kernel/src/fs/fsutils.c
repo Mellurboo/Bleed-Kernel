@@ -23,7 +23,7 @@ void list_directory(const char* path_str) {
         int r = vfs_readdir(dir, i, &child);
         if (r < 0) break;
 
-        kprintf("%s%s  ", child->type == INODE_DIRECTORY ? CYAN_FG : "", child->internal_data);
+        kprintf("%s%s  ", child->type == INODE_DIRECTORY ? CYAN_FG : "", (char *)child->internal_data);
         if (child->type == INODE_DIRECTORY) kprintf(CYAN_FG);
         kprintf("%s", RESET);
     }

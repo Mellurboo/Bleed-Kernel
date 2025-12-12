@@ -12,13 +12,16 @@
 #include <drivers/pic/pic.h>
 #include <drivers/framebuffer/framebuffer.h>
 #include <programs/shell/tempshell.h>
+#include <drivers/pit/pit.h>
 #include <fs/vfs.h>
 #include <status.h>
 #include <fs/fsutils.h>
 #include <fs/archive/tar.h>
+#include <sys/sleep.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
+extern void init_pit(uint32_t freq);
 
 void load_initrd(){ 
     if (!module_request.response || module_request.response->module_count == 0){
@@ -49,14 +52,15 @@ void kmain() {
     init_pmm();
     init_serial();
     serial_write("Bleed Serial Output:\n");
+    init_pit(100);
     init_pic(32, 40);
 
     init_gdt();
     init_idt();
     init_sse();
 
-    kprintf(LOG_INFO "Physical Memory: %lluMiB\n", get_usable_pmem_size() / 1024 / 1024);
-    kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", get_max_paddr());
+    kprintf(LOG_INFO "Physical Memory: %luMiB\n", get_usable_pmem_size() / 1024 / 1024);
+    kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
 
     extend_paging();
     vfs_mount_root();
@@ -66,4 +70,6 @@ void kmain() {
     shell_start();
 
     for (;;){}
+
+    return;
 }

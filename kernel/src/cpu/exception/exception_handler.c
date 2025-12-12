@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ansii.h>
 #include <drivers/serial/serial.h>
+#include <drivers/framebuffer/framebuffer.h>
 
 struct isr_stackframe {
     uint64_t rax;
@@ -87,22 +88,22 @@ extern void ke_exception_handler(void *frame){
     kprintf("===============================================\n" FG_RESET);
 
     kprintf(ORANGE_FG " EXCEPTION: %s\n" FG_RESET, exception_name(vector));
-    kprintf(RED_FG " VECTOR: %llu   ERROR: 0x%p\n" FG_RESET, vector, err);
+    kprintf(RED_FG " VECTOR: %llu   ERROR: 0x%lld\n" FG_RESET, vector, err);
 
     kprintf("\n" YELLOW_FG " CPU STATE:" FG_RESET "\n");
-    kprintf(" RIP: " RED_FG "0x%p" FG_RESET "   CS: 0x%p   RFLAGS: 0x%p\n", rip, cs, rflags);
+    kprintf(" RIP: " RED_FG "0x%lld" FG_RESET "   CS: 0x%lld   RFLAGS: 0x%lld\n", rip, cs, rflags);
 
     kprintf("\n" BLUE_FG " Registers:" FG_RESET "\n");
-    kprintf(" RAX: %s0x%p%s  RBX: %s0x%p%s  RCX: %s0x%p%s  RDX: %s0x%p%s\n",
+    kprintf(" RAX: %s%lld%s  RBX: %s%lld%s  RCX: %s%lld%s  RDX: %s%lld%s\n",
             BLUE_FG, f->rax, RESET, BLUE_FG, f->rbx, RESET, BLUE_FG, f->rcx, RESET, BLUE_FG, f->rdx, RESET);
 
-    kprintf(" RSI: %s0x%p%s  RDI: %s0x%p%s  RBP: %s0x%p%s\n",
+    kprintf(" RSI: %s%lld%s  RDI: %s%lld%s  RBP: %s%lld%s\n",
             BLUE_FG, f->rsi, RESET, BLUE_FG, f->rdi, RESET, BLUE_FG, f->rbp, RESET);
 
-    kprintf(" R8 : %s0x%p%s  R9 : %s0x%p%s  R10: %s0x%p%s  R11: %s0x%p%s\n",
+    kprintf(" R8 : %s%lld%s  R9 : %s%lld%s  R10: %s%lld%s  R11: %s%lld%s\n",
             BLUE_FG, f->r8, RESET, BLUE_FG, f->r9, RESET, BLUE_FG, f->r10, RESET, BLUE_FG, f->r11, RESET);
 
-    kprintf(" R12: %s0x%p%s  R13: %s0x%p%s  R14: %s0x%p%s  R15: %s0x%p%s\n",
+    kprintf(" R12: %s%lld%s  R13: %s%lld%s  R14: %s%lld%s  R15: %s%lld%s\n",
             BLUE_FG, f->r12, RESET, BLUE_FG, f->r13, RESET, BLUE_FG, f->r14, RESET, BLUE_FG, f->r15, RESET);
 
     if (vector == 14){
@@ -110,8 +111,8 @@ extern void ke_exception_handler(void *frame){
         uint64_t cr2 = 0; 
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
-        kprintf("  Faulting address: " RED_FG "0x%p" FG_RESET "\n", cr2);
-        kprintf("  Error code: 0x%p\n", err);
+        kprintf("  Faulting address: " RED_FG "0x%p" FG_RESET "\n", (void*)cr2);
+        kprintf("  Error code: 0x%lld\n", err);
         kprintf("   P  = %u\n", (unsigned)((err >> 0) & 1));
         kprintf("   W/R= %u\n", (unsigned)((err >> 1) & 1));
         kprintf("   U/S= %u\n", (unsigned)((err >> 2) & 1));
