@@ -13,3 +13,7 @@ extern volatile struct limine_framebuffer_request framebuffer_request;
 void* get_framebuffer_addr(){
     return framebuffer_request.response->framebuffers[0]->address;
 }
+
+uint64_t get_framebuffer_pitch(){
+    return framebuffer_request.response->framebuffers[0]->pitch;
+}
