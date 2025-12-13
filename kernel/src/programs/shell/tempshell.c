@@ -4,6 +4,7 @@
 */
 
 #include <drivers/ps2/ps2_keyboard.h>
+#include <drivers/framebuffer/framebuffer.h>
 #include <stdio.h>
 #include <string.h>
 #include <fs/fsutils.h>
@@ -12,9 +13,38 @@
 #include <ansii.h>
 
 #define LINE_BUF    256
-#define CMND_PFX    "boot$>" 
+
 static char line[LINE_BUF];
 static int pos = 0;
+
+#define CURSOR_COLOR 0xFFFFFFFF
+
+static cursor prev_cursor = {0, 0};
+static void draw_cursor() {
+    psf_font_t *font = get_tty_font();
+    cursor c = get_cursor_pos();
+
+    if (!font) return;
+
+    uint32_t *fb_ptr = (uint32_t *)get_framebuffer_addr();
+    size_t pitch = get_framebuffer_pitch();
+
+    // Erase previous cursor underline
+    size_t px_base = prev_cursor.x * font->width;
+    size_t py_base = prev_cursor.y * font->height + font->height - 1;
+    for (size_t x = 0; x < font->width; x++) {
+        fb_ptr[py_base * pitch + (px_base + x)] = 0x00000000;
+    }
+
+    // Draw underline at current cursor position
+    px_base = c.x * font->width;
+    py_base = c.y * font->height + font->height - 1;
+    for (size_t x = 0; x < font->width; x++) {
+        fb_ptr[py_base * pitch + (px_base + x)] = CURSOR_COLOR;
+    }
+
+    prev_cursor = c;
+}
 
 static void run_command(const char *cmd) {
     if (strcmp(cmd, "help") == 0) {
@@ -89,6 +119,7 @@ static void handle_key(char c) {
         run_command(line);
         pos = 0;
         kprintf("%skernel@%sbleed-kernel$ %s", RED_FG, GRAY_FG, RESET);
+        draw_cursor();
         return;
     }
 
@@ -97,6 +128,7 @@ static void handle_key(char c) {
             pos--;
             kprintf("\b \b");
         }
+        draw_cursor();
         return;
     }
 
@@ -104,10 +136,14 @@ static void handle_key(char c) {
         line[pos++] = c;
         kprintf("%c", c);
     }
+
+    draw_cursor();
 }
+
 
 void shell_start(void) {
     kprintf(LOG_WARN "This is a very primitive shell that will be removed very soon, thanks for trying out bleed!\n");
     keyboard_set_callback(handle_key);
     kprintf("%skernel@%sbleed-kernel$ %s", RED_FG, GRAY_FG, RESET);
+    draw_cursor();
 }

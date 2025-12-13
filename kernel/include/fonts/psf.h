@@ -15,7 +15,7 @@ typedef struct psf_font {
     bool has_unicode_table;
     uint8_t *unicode_table;
     size_t unicode_table_size;
-}__attribute__((packed)) psf_font_t;
+} psf_font_t;
 
 
 psf_font_t* psf_load_font(const void *data, size_t size);

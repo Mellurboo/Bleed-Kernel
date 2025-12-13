@@ -43,6 +43,4 @@ void init_idt(){
 
     __asm__ volatile ("lidt %0" : : "m"(idt_ptr));
     serial_printf(LOG_OK "Interrupt Descriptor Table Loaded (IDTR=%p)\n", (void*)idt_ptr.address);
-    __asm__ volatile ("sti");
-    serial_printf(LOG_INFO "Interrupts Enabled!\n");
 }

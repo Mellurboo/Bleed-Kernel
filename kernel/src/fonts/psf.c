@@ -100,7 +100,12 @@ psf_font_t* psf_load_font_file(INode_t* inode){
 }
 
 const uint8_t* psf_get_glyph(const psf_font_t *font, uint16_t code){
-    if (!font || code >= font->glyph_count) return NULL;
+    if (!font) return NULL;
+
+    // PSF1 font: glyphs are indexed from 0–255, skip control chars if you want
+    if (code >= font->glyph_count) return NULL;
+
+    // multiply by the **number of bytes per glyph**, not bytes_per_row
     return font->glyphs + code * font->bytes_per_row * font->height;
 }
 
