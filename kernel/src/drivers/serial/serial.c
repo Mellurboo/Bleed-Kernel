@@ -5,6 +5,11 @@
 */
 #include <cpu/io.h>
 #include <stdint.h>
+#include <stddef.h>
+#include <mm/heap.h>
+#include <stdarg.h>
+#include <format.h>
+#include <string.h>
 
 #define PORT_COM1   0x3F8
 #define SERIAL_TIMEOUT 100000
@@ -46,6 +51,10 @@ int init_serial(){
 void serial_write_char(char c){
     if (!serial_available) return;
 
+    if (c == '\n') {
+        serial_write_char('\r');
+    }
+
     uint32_t timeout = SERIAL_TIMEOUT;
     while (!is_serial_transmit_empty() && timeout--) { }
     if (timeout == 0) return;
@@ -75,4 +84,87 @@ void serial_write_hex(uint64_t value){
     buffer[16] = '\0';
     serial_write("0x");
     serial_write(buffer);
+}
+
+
+void serial_printf(const char* fmt, ...) {
+    if (!serial_available) return;
+
+    va_list args;
+    va_start(args, fmt);
+
+    while (*fmt) {
+        if (*fmt != '%') {
+            serial_write_char(*fmt++);
+            continue;
+        }
+
+        fmt++;
+        char* str = NULL;
+
+        switch (*fmt) {
+            case 's':
+                str = (char*)va_arg(args, char*);
+                if (!str) str = "(null)";
+                serial_write(str);
+                break;
+
+            case 'c': {
+                char c = (char)va_arg(args, int);
+                serial_write_char(c);
+                break;
+            }
+
+            case 'd':
+            case 'i': {
+                int v = va_arg(args, int);
+                str = itoa_signed((int64_t)v);
+                if (str) { serial_write(str); kfree(str, strlen(str)); }
+                break;
+            }
+
+            case 'u': {
+                unsigned v = va_arg(args, unsigned);
+                str = utoa_base(v, 10, 0);
+                if (str) { serial_write(str); kfree(str, strlen(str)); }
+                break;
+            }
+
+            case 'x': {
+                unsigned v = va_arg(args, unsigned);
+                str = utoa_base(v, 16, 0);
+                if (str) { serial_write(str); kfree(str, strlen(str)); }
+                break;
+            }
+
+            case 'X': {
+                unsigned v = va_arg(args, unsigned);
+                str = utoa_base(v, 16, 1);
+                if (str) { serial_write(str); kfree(str, strlen(str)); }
+                break;
+            }
+
+            case 'p': {
+                uintptr_t v = (uintptr_t)va_arg(args, void*);
+                serial_write("0x");
+                str = utoa_base(v, 16, 0);
+                if (str) { serial_write(str); kfree(str, strlen(str)); }
+                break;
+            }
+
+            case '%':
+                serial_write_char('%');
+                break;
+
+            default:
+                // Unknown specifier, print literally.
+                serial_write_char('%');
+                serial_write_char(*fmt);
+                break;
+        }
+
+        fmt++;
+    }
+
+    va_end(args);
 }

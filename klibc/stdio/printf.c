@@ -8,9 +8,9 @@
 #define NANOPRINTF_USE_FLOAT_FORMAT_SPECIFIERS           0
 
 #include <drivers/framebuffer/framebuffer.h>
-#include <vendor/flanterm/flanterm.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <lib/nanoprintf.h>
 #include <mm/heap.h>
 
@@ -41,6 +41,6 @@ void kprintf(const char *fmt, ...){
         size = size * 2;
     }
 
-    flanterm_write(get_flanterm_context(), buf, strlen(buf));
+    splatter_write(buf);
     kfree(buf, size);
 }

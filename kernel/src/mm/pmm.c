@@ -71,7 +71,6 @@ uint8_t init_pmm() {
     struct limine_memmap_response* mmap = memmap_request.response;
     struct limine_hhdm_response* hhdm = hhdm_request.response;
     bitmap_entry_t** prev_tail = &bitmap_head;
-
     for (uint64_t i = 0; i < mmap->entry_count; i++) {
         if (mmap->entries[i]->type != LIMINE_MEMMAP_USABLE)
             continue;
@@ -88,11 +87,11 @@ uint8_t init_pmm() {
         memset(bmentry->bitmap, FRAME_FREE, ((bmentry->capacity) + 7) / 8);
         size_t bitmap_header_page_size = PAGE_ALIGN_UP(sizeof(bitmap_entry_t) + (bmentry->capacity + 7) / 8) / PAGE_SIZE;
         entry_mark_unavailable(bmentry, 0, bitmap_header_page_size);
-    
-        kprintf(LOG_OK "Usable Space Bitmap created: 0x%p | %lu Pages (%lu KiB) | Available Pages: %lu\n", (void *)bmentry, bmentry->capacity, ((bmentry->capacity)*PAGE_SIZE)/1024, bmentry->available_pages);
-    }
 
-    kprintf(LOG_OK "PMM Initialised\n");
+        serial_printf(LOG_INFO "Usable Space Bitmap created: %p of %d pages\n", (void *)bmentry, bmentry->available_pages);
+    }
+    
+    serial_printf(LOG_OK "PMM Initialised\n");
     return 0;
 }
 
@@ -131,12 +130,6 @@ paddr_t alloc_pages(size_t page_count){
 
             entry_mark_unavailable(head, start, page_count);
             uintptr_t paddr = (((paddr_t)head) - hhdm->offset) + (start * PAGE_SIZE);
-
-            serial_write("Allocated ");
-            serial_write_hex(page_count);
-            serial_write(" Pages at ");
-            serial_write_hex(paddr);
-            serial_write("\n");
 
             return paddr;
         }

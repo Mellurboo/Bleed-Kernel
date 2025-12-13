@@ -81,19 +81,20 @@ extern void ke_exception_handler(void *frame){
     serial_write_hex(vector);
     serial_write("\n");
     serial_write_hex(f->rip);
+    serial_write("\n");
 
     kprintf("\n");
     kprintf(RED_FG "===============================================\n");
     kprintf("   !!!  FATAL KERNEL EXCEPTION OCCURRED  !!!\n");
-    kprintf("===============================================\n" FG_RESET);
+    kprintf("===============================================\n" RESET);
 
-    kprintf(ORANGE_FG " EXCEPTION: %s\n" FG_RESET, exception_name(vector));
-    kprintf(RED_FG " VECTOR: %llu   ERROR: 0x%lld\n" FG_RESET, vector, err);
+    kprintf(ORANGE_FG " EXCEPTION: %s\n" RESET, exception_name(vector));
+    kprintf(RED_FG " VECTOR: %llu   ERROR: 0x%lld\n" RESET, vector, err);
 
-    kprintf("\n" YELLOW_FG " CPU STATE:" FG_RESET "\n");
-    kprintf(" RIP: " RED_FG "0x%lld" FG_RESET "   CS: 0x%lld   RFLAGS: 0x%lld\n", rip, cs, rflags);
+    kprintf("\n" YELLOW_FG " CPU STATE:" RESET "\n");
+    kprintf(" RIP: " RED_FG "0x%lld" RESET "   CS: 0x%lld   RFLAGS: 0x%lld\n", rip, cs, rflags);
 
-    kprintf("\n" BLUE_FG " Registers:" FG_RESET "\n");
+    kprintf("\n" BLUE_FG " Registers:" RESET "\n");
     kprintf(" RAX: %s%lld%s  RBX: %s%lld%s  RCX: %s%lld%s  RDX: %s%lld%s\n",
             BLUE_FG, f->rax, RESET, BLUE_FG, f->rbx, RESET, BLUE_FG, f->rcx, RESET, BLUE_FG, f->rdx, RESET);
 
@@ -107,11 +108,11 @@ extern void ke_exception_handler(void *frame){
             BLUE_FG, f->r12, RESET, BLUE_FG, f->r13, RESET, BLUE_FG, f->r14, RESET, BLUE_FG, f->r15, RESET);
 
     if (vector == 14){
-        kprintf("\n" RED_FG " PAGE FAULT DETAILS\n" FG_RESET);
+        kprintf("\n" RED_FG " PAGE FAULT DETAILS\n" RESET);
         uint64_t cr2 = 0; 
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
-        kprintf("  Faulting address: " RED_FG "0x%p" FG_RESET "\n", (void*)cr2);
+        kprintf("  Faulting address: " RED_FG "0x%p" RESET "\n", (void*)cr2);
         kprintf("  Error code: 0x%lld\n", err);
         kprintf("   P  = %u\n", (unsigned)((err >> 0) & 1));
         kprintf("   W/R= %u\n", (unsigned)((err >> 1) & 1));
@@ -123,7 +124,7 @@ extern void ke_exception_handler(void *frame){
     uint64_t cur_rbp;
     __asm__ volatile ("mov %%rbp, %0" : "=r"(cur_rbp));
     print_stack_trace((uint64_t*)cur_rbp);
-    kprintf("\n" RED_FG " SYSTEM HALTED\n" FG_RESET);
+    kprintf("\n" RED_FG " SYSTEM HALTED\n" RESET);
     __asm__ volatile ("hlt");
     for(;;){}
 }

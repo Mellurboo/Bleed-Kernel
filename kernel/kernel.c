@@ -10,7 +10,6 @@
 #include <mm/paging.h>
 #include <drivers/serial/serial.h>
 #include <drivers/pic/pic.h>
-#include <drivers/framebuffer/framebuffer.h>
 #include <programs/shell/tempshell.h>
 #include <drivers/pit/pit.h>
 #include <fs/vfs.h>
@@ -18,6 +17,8 @@
 #include <fs/fsutils.h>
 #include <fs/archive/tar.h>
 #include <sys/sleep.h>
+#include <fonts/psf.h>
+#include <drivers/framebuffer/framebuffer.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
@@ -25,7 +26,7 @@ extern void init_pit(uint32_t freq);
 
 void load_initrd(){ 
     if (!module_request.response || module_request.response->module_count == 0){
-        kprintf(LOG_ERROR "No Modules loaded by Bootloader\n");
+        serial_printf("No Modules Found by booloader\n");
         return;
     }
 
@@ -45,13 +46,12 @@ void splash(){
 
     inode_read(splash, splash_buffer, splash_size, 0);
 
-    kprintf("%s%s%s\n", RGB_FG(200, 69, 69), splash_buffer, RESET);
+    serial_printf("%s\n", splash_buffer);
 }
 
 void kmain() {
-    init_pmm();
     init_serial();
-    serial_write("Bleed Serial Output:\n");
+    init_pmm();
     init_pit(100);
     init_pic(32, 40);
 
@@ -59,12 +59,14 @@ void kmain() {
     init_idt();
     init_sse();
 
-    kprintf(LOG_INFO "Physical Memory: %luMiB\n", get_usable_pmem_size() / 1024 / 1024);
-    kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
-
     extend_paging();
     vfs_mount_root();
     load_initrd();
+
+    psf_init();
+
+    kprintf(LOG_INFO "Physical Memory: %ldMiB\n", get_usable_pmem_size() / 1024 / 1024);
+    kprintf(LOG_INFO "Highest Free PADDR: %p\n", (void*)get_max_paddr());
 
     splash();
     shell_start();

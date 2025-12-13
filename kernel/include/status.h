@@ -9,6 +9,9 @@ typedef enum error_code {
     FILE_NOT_FOUND,
     TAR_EXTRACT_FAILURE,
 
+    UNEXPECTED_FILE_TYPE,
+    TRUNCATED,
+
     ERROR_CODES_COUNT,
 } error_code_t;
 

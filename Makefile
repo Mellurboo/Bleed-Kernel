@@ -60,7 +60,7 @@ edk2-ovmf:
 
 .PHONY: initrd
 initrd:
-	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt
+	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt initrd/resources/ttyfont.psf
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root
@@ -86,7 +86,7 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 16G
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 16G -no-reboot -no-shutdown
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso

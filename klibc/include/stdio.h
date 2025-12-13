@@ -1,6 +1,9 @@
 #ifndef STDIO_H
 #define STDIO_H 1
 
+#include <string.h>
+#include <stdint.h>
+
 /// @brief kernel tty print formatted string
 /// @param fmt string
 /// @param vardic argument list

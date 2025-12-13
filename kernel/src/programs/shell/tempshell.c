@@ -18,20 +18,19 @@ static int pos = 0;
 
 static void run_command(const char *cmd) {
     if (strcmp(cmd, "help") == 0) {
-        kprintf("%sShitty Shell (tm)%s Commands:\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%shelp:%s display this help message\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%secho:%s print the message following\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%shalt:%s disables interrupts and stops the cpu\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%sls:%s lists the contents of a directory\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%sclear:%s clears the screen\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%scat:%s displays the contents of a file\n", RGB_FG(133, 204, 100), RESET);
-        kprintf("%sfault:%s manually trigger a page fault exception\n", RGB_FG(133, 204, 100), RESET);
+        kprintf("Shitty Shell (tm) Commands:\n");
+        kprintf("help: display this help message\n");
+        kprintf("echo: print the message following\n");
+        kprintf("halt: disables interrupts and stops the cpu\n");
+        kprintf("ls: lists the contents of a directory\n");
+        kprintf("cat: displays the contents of a file\n");
+        kprintf("fault: manually trigger a page fault exception\n");
     }
     else if (strncmp(cmd, "echo ", 5) == 0) {
         kprintf("%s\n", cmd + 5);
     }
     else if (strcmp(cmd, "halt") == 0) {
-        kprintf("%sYour Computer has stopped\nFrom here nothing will happen until you hard-reset%s\n",RED_FG, RESET);
+        kprintf("Your Computer has stopped\nFrom here nothing will happen until you hard-reset\n");
         __asm__ volatile("cli");
         for(;;) __asm__ volatile("hlt");
     }
@@ -39,9 +38,6 @@ static void run_command(const char *cmd) {
         const char *path = "/";
         if (strlen(cmd) > 3) path = cmd + 3;
         list_directory(path);
-    }
-    else if (strcmp(cmd, "clear") == 0) {
-        kprintf("\x1B[2J\x1B[H");
     }
     else if (strncmp(cmd, "cat ", 4) == 0) {
         const char *path_str = cmd + 4;
@@ -92,7 +88,7 @@ static void handle_key(char c) {
         kprintf("\n");
         run_command(line);
         pos = 0;
-        kprintf("%sbleed-kernel%s$ ", RGB_FG(133, 204, 100), RESET);
+        kprintf("%skernel@%sbleed-kernel$ %s", RED_FG, GRAY_FG, RESET);
         return;
     }
 
@@ -110,9 +106,8 @@ static void handle_key(char c) {
     }
 }
 
-// im so lazy with this extern
 void shell_start(void) {
     kprintf(LOG_WARN "This is a very primitive shell that will be removed very soon, thanks for trying out bleed!\n");
     keyboard_set_callback(handle_key);
-    kprintf("%sbleed-kernel%s$ ", RGB_FG(133, 204, 100), RESET);
+    kprintf("%skernel@%sbleed-kernel$ %s", RED_FG, GRAY_FG, RESET);
 }

@@ -16,8 +16,8 @@ extern volatile struct limine_memmap_request memmap_request;
 
 static uint64_t alloc_empty_frame(void **vaddr) {
     paddr_t paddr = alloc_pages(1);
-    if(!paddr)
-        kprintf(LOG_ERROR "Page Allocation Failed\n");
+    if(!paddr) {}
+        //kprintf(LOG_ERROR "Page Allocation Failed\n");
 
     void* v = paddr_to_vaddr(paddr);
     if (v) memset(v, 0, PAGE_SIZE_4K);
@@ -70,7 +70,7 @@ void map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
 void extend_paging() {
     struct limine_memmap_response* mmap = memmap_request.response;
 
-    kprintf(LOG_INFO "Paging: memmap entry count = %llu\n", mmap->entry_count);
+    //kprintf(LOG_INFO "Paging: memmap entry count = %llu\n", mmap->entry_count);
 
     for (size_t i = 0; i < mmap->entry_count; i++) {
         struct limine_memmap_entry* entry = mmap->entries[i];
@@ -89,5 +89,5 @@ void extend_paging() {
         }
     }
 
-    kprintf(LOG_OK "Page Tables Reloaded\n");
+    //kprintf(LOG_OK "Page Tables Reloaded\n");
 }
