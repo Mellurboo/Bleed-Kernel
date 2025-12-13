@@ -46,17 +46,20 @@ void splash(){
 
     inode_read(splash, splash_buffer, splash_size, 0);
 
-    serial_printf("%s\n", splash_buffer);
+    kprintf("%s\n", splash_buffer);
 }
 
 void kmain() {
     init_serial();
     init_pmm();
-    init_pit(100);
-    init_pic(32, 40);
 
+    asm volatile ("cli");
     init_gdt();
     init_idt();
+    init_pit(100);
+    init_pic(32, 40);
+    asm volatile ("sti");
+
     init_sse();
 
     extend_paging();
@@ -66,7 +69,7 @@ void kmain() {
     psf_init();
 
     kprintf(LOG_INFO "Physical Memory: %ldMiB\n", get_usable_pmem_size() / 1024 / 1024);
-    kprintf(LOG_INFO "Highest Free PADDR: %p\n", (void*)get_max_paddr());
+    kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
 
     splash();
     shell_start();
