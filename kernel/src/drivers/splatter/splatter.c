@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <vendor/limine/limine.h>
 #include <drivers/framebuffer/framebuffer.h>
+#include <string.h>
 
 extern volatile struct limine_framebuffer_request framebuffer_request;
 
@@ -11,6 +12,30 @@ cursor tty_cursor = {
 
 cursor get_cursor_pos(){
     return tty_cursor;
+}
+
+static void tty_scroll(uint32_t bg) {
+    psf_font_t *font = get_tty_font();
+    uint32_t *fb = (uint32_t*)get_framebuffer_addr();
+    uint64_t fb_pitch = get_framebuffer_pitch();
+    uint64_t fb_height = get_framebuffer_height();
+
+    size_t row_px = font->height;
+    size_t scroll_px = row_px * fb_pitch;
+
+    size_t total_px = fb_pitch * fb_height;
+
+    memmove(
+        fb,
+        fb + scroll_px,
+        (total_px - scroll_px) * sizeof(uint32_t)
+    );
+
+    /* Clear the last text row */
+    size_t start = (fb_height - row_px) * fb_pitch;
+    for (size_t i = 0; i < row_px * fb_pitch; i++) {
+        fb[start + i] = bg;
+    }
 }
 
 /// @brief write a character to the framebuffer
@@ -70,8 +95,12 @@ void splatter_putc(psf_font_t* font, char c, uint32_t fg, uint32_t bg){
         cursor.x = 0;
         cursor.y++;
     }
+
+    // i was going to make it so the user could scroll here with 
+    // page up and page down but i dont think that is appropriate right now :(
     if (cursor.y >= max_rows) {
-        cursor.y = max_rows - 1; // TODO: scroll if you want
+        tty_scroll(bg);
+        cursor.y = max_rows - 1;
     }
 
     // Update global cursor

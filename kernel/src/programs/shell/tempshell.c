@@ -27,7 +27,7 @@ static void draw_cursor() {
     if (!font) return;
 
     uint32_t *fb_ptr = (uint32_t *)get_framebuffer_addr();
-    size_t pitch = get_framebuffer_pitch() / 4;
+    size_t pitch = get_framebuffer_pitch();
 
     // Erase previous cursor underline
     size_t px_base = prev_cursor.x * font->width;

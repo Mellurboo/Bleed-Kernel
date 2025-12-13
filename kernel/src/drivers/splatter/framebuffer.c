@@ -1,4 +1,5 @@
 #include <vendor/limine/limine.h>
+#include <fonts/psf.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,5 +16,13 @@ void* get_framebuffer_addr(){
 }
 
 uint64_t get_framebuffer_pitch(){
-    return framebuffer_request.response->framebuffers[0]->pitch;
+    return framebuffer_request.response->framebuffers[0]->pitch / 4;
+}
+
+uint64_t get_framebuffer_width(){
+    return framebuffer_request.response->framebuffers[0]->width;
+}
+
+uint64_t get_framebuffer_height(){
+    return framebuffer_request.response->framebuffers[0]->height;
 }

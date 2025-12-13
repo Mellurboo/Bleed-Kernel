@@ -10,6 +10,8 @@ typedef struct cursor{
 
 void* get_framebuffer_addr();
 uint64_t get_framebuffer_pitch();
+uint64_t get_framebuffer_width();
+uint64_t get_framebuffer_height();
 
 cursor get_cursor_pos();
 
