@@ -1,16 +1,15 @@
 #ifndef ASCII_H
 #define ASCII_H 1
 
-#define RESET "\033[39m"
-#define FG_RESET "\x1b[39m"
+#define RESET       "\x1b[255;255;255;255;0m"
 
 #define RGB_FG(r,g,b) "\x1b[38;2;" #r ";" #g ";" #b "m"
 #define RGB_BG(r,g,b) "\x1b[48;2;" #r ";" #g ";" #b "m"
 
-#define LOG_INFO    "\x1b[38;2;0;200;255m[INFO]" FG_RESET "  "
-#define LOG_OK      "\x1b[38;2;0;255;0m[OK]" FG_RESET "    "
-#define LOG_WARN    "\x1b[38;2;255;180;0m[WARN]" FG_RESET "  "
-#define LOG_ERROR   "\x1b[38;2;255;50;50m[ERROR]" FG_RESET " "
+#define LOG_INFO    "\x1b[38;2;0;200;255m[INFO]" RESET "  "
+#define LOG_OK      "\x1b[38;2;0;255;0m[OK]" RESET "    "
+#define LOG_WARN    "\x1b[38;2;255;180;0m[WARN]" RESET "  "
+#define LOG_ERROR   "\x1b[38;2;255;50;50m[ERROR]" RESET " "
 
 #define RED_FG          "\x1b[38;2;255;0;0m"
 #define GREEN_FG        "\x1b[38;2;0;255;0m"

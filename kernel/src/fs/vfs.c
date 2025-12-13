@@ -12,9 +12,9 @@ INode_t* vfs_root = NULL;
 int vfs_mount_root(){
     int r = tempfs.mount(&vfs_root);
     if (r < 0) {
-        kprintf(LOG_ERROR "vfs_mount_root: tempfs.mount failed: %d\n", r);
+        //kprintf(LOG_ERROR "vfs_mount_root: tempfs.mount failed: %d\n", r);
     }
-    kprintf(LOG_OK "VFS Root Mounted\n");
+    //kprintf(LOG_OK "VFS Root Mounted\n");
     return r;
 }
 

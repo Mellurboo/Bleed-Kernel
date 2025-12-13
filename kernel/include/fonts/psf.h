@@ -6,21 +6,25 @@
 #include <stdbool.h>
 #include <fs/vfs.h>
 
-typedef struct psf1_font {
+typedef struct psf_font {
     uint8_t *glyphs;
     size_t glyph_count;
-    uint8_t charsize;
+    uint32_t width;
+    uint32_t height;
+    uint32_t bytes_per_row;
     bool has_unicode_table;
     uint8_t *unicode_table;
     size_t unicode_table_size;
-} psf1_font_t;
+}__attribute__((packed)) psf_font_t;
 
-psf1_font_t* psf_load_font(const void *data, size_t size);
-psf1_font_t* psf_load_font_file(INode_t *inode);
 
-const uint8_t* psf_get_glyph(const psf1_font_t *font, uint16_t code);
-void psf_free(psf1_font_t *font);
+psf_font_t* psf_load_font(const void *data, size_t size);
+psf_font_t* psf_load_font_file(INode_t *inode);
+
+const uint8_t* psf_get_glyph(const psf_font_t *font, uint16_t code);
+void psf_free(psf_font_t *font);
 
 void psf_init();
+psf_font_t *get_tty_font();
 
 #endif

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <drivers/ps2/ps2_keyboard.h>
 #include <drivers/pit/pit.h>
+#include <ansii.h>
 
 #define PIC1        0x20    // Master PIC
 #define PIC2        0xA0    // Slave PIC
@@ -64,7 +65,7 @@ void irq_handler(uint8_t irq) {
             ps2_keyboard_irq(irq);
             break;
         default:
-            kprintf("pic sent us an unimplemented req\n");
+            kprintf(LOG_WARN "pic sent us an unimplemented req\n");
             break;
     }
 

@@ -1,14 +1,11 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H 1
 
-#include <vendor/flanterm/impl/fb.h>
-#include <vendor/limine/limine.h>
 #include <fonts/psf.h>
 
-struct flanterm_context *get_flanterm_context();
-struct flanterm_context *set_flanterm_context(psf1_font_t *font, size_t font_width, size_t font_height, bool flush);
-void* get_fb_addr();
-
-void fontwrite(psf1_font_t* font, const char* str, uint32_t fg, uint32_t bg);
+void* get_framebuffer_addr();
+void splatter_putc(psf_font_t* font, char c, uint32_t fg, uint32_t bg);
+void splatter_write(const char* str);
+void ansi_handle_char(char c);
 
 #endif
