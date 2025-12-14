@@ -29,18 +29,24 @@ typedef struct task {
     task_state_t    state;
     cpu_context_t  *context;
 
-    uint8_t kernel_stack[KERNEL_STACK_SIZE];
+    uint8_t *kernel_stack;
     uint32_t quantum_remaining;
 
     struct task *next;
 } task_t;
 
-int scheduler_apply_task(void (*entry)(void));
-extern void scheduler_init_bootstrap(void *rsp);
-extern cpu_context_t *scheduler_tick(cpu_context_t *context);
+typedef void (*task_itteration_fn)(task_t *task, void *userdata);
 
-void task_exit(void);
+int sched_create_task(void (*entry)(void));
+extern void sched_bootstrap(void *rsp);
+extern cpu_context_t *sched_tick(cpu_context_t *context);
+void scheduler_reap(void);
+void exit(void);
+
+// api
 const char *task_state_str(task_state_t state);
-task_t get_task_from_tid(uint64_t tid);
+task_t *get_task_by_id(uint64_t tid);
 uint64_t get_task_count();
+
+void itterate_each_task(task_itteration_fn fn, void *userdata);
 #endif

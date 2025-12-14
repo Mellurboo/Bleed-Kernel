@@ -2,7 +2,7 @@
 .text
 
 .extern ke_exception_handler
-.extern scheduler_tick
+.extern sched_tick
 .extern pic_eoi
 
 .macro ISR_NO_ERR v
@@ -192,7 +192,7 @@ irq0:
     push r15
 
     mov rdi, rsp
-    call scheduler_tick
+    call sched_tick
     mov rsp, rax
 
     mov edi, 0

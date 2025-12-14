@@ -52,7 +52,7 @@ void irq_handler(uint8_t irq, cpu_context_t *r) {
     pic_eoi(irq);
     switch (irq) {
         case 0:
-            scheduler_tick(r);
+            sched_tick(r);
             timer_ticks++;
             if (pit_countdown > 0)
                 pit_countdown--;

@@ -8,15 +8,19 @@
 #include <stdio.h>
 #include <ansii.h>
 #include <panic.h>
+#include <mm/heap.h>
 
-task_t tasks[MAX_TASKS] = {0};
+#define MAX_REAPES_PER_CALL 16
 
 static task_t *current_task = NULL;
 static task_t *task_queue = NULL;
+static task_t *task_list_head = NULL;
+static uint64_t next_pid = 1; // TID 0 reserved for kernel
+                              // TID 1 reserved for reaper (scheduled at bootstrap)
 
 void scheduler_reap(void);
 
-static void queue_task(task_t *task){
+static void queue_task(task_t *task) {
     if (!task_queue) {
         task_queue = task;
         task->next = task;
@@ -24,9 +28,9 @@ static void queue_task(task_t *task){
     }
 
     task_t *tail = task_queue;
-    while(tail->next != task_queue)
+    while (tail->next != task_queue)
         tail = tail->next;
-    
+
     tail->next = task;
     task->next = task_queue;
 }
@@ -43,44 +47,40 @@ static task_t *get_next_ready_task(void){
     if (current_task->state == TASK_RUNNING || current_task->state == TASK_READY)
         return current_task;
 
-    return &tasks[0]; // just run the kernel task, if this faults the kernel task is cooked
+    return task_list_head;
 }
 
 /// @brief apply a task for the scheduler queue
 /// @param entry entry point address
 /// @return success
-int scheduler_apply_task(void (*entry)(void)){
-    task_t *task = NULL;
-    uint64_t tid = 0;
+int sched_create_task(void (*entry)(void)) {
+    task_t *task = kmalloc(sizeof(task_t));
+    if (!task) ke_panic("Failed to allocate task");
 
-    for (tid = 0; tid < MAX_TASKS; tid++){
-        if (tasks[tid].state == TASK_DEAD 
-            || tasks[tid].state == TASK_FREE
-            || tasks[tid].context == NULL){
-            task = &tasks[tid];
-            break;
-        }
-    }
-
-    if (!task) ke_panic("TASK COUNT OVERFLOW");
-        
-    task->id = tid;
+    task->id = next_pid++;
     task->state = TASK_READY;
     task->quantum_remaining = QUANTUM;
+    task->next = NULL;
 
-    uint64_t task_stack_top = (uint64_t)&task->kernel_stack[KERNEL_STACK_SIZE];
-    cpu_context_t *context  = (cpu_context_t *)(task_stack_top - sizeof(cpu_context_t));
+    // allocate stack
+    task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
+    if (!task->kernel_stack) ke_panic("Failed to allocate task stack");
+    uint64_t task_stack_top = (uint64_t)task->kernel_stack + KERNEL_STACK_SIZE;
+
+    // setup ctx
+    cpu_context_t *context = (cpu_context_t *)(task_stack_top - sizeof(cpu_context_t));
     memset(context, 0, sizeof(cpu_context_t));
-
     context->rip = (uint64_t)entry;
-    context->cs  = 0x08;
-    context->ss  = 0x10;
+    context->cs = 0x08;
+    context->ss = 0x10;
     context->rflags = 0x202;
     context->rsp = task_stack_top;
-
     task->context = context;
 
     queue_task(task);
+
+    // update head ptr
+    if (!task_list_head) task_list_head = task;
 
     return task->id;
 }
@@ -88,21 +88,14 @@ int scheduler_apply_task(void (*entry)(void)){
 void init_scheduler(void){
     asm volatile("cli");
 
-    current_task = &tasks[0];
-    current_task->id = 0;
-    current_task->state = TASK_RUNNING;
-    current_task->quantum_remaining = QUANTUM;
-    current_task->next = current_task;
-
-    task_queue = current_task;
-
-    for (int i = 1; i < MAX_TASKS; i++)
-        tasks[i].state = TASK_DEAD;
+    // Kernel task already created in bootstrap
+    // current_task = task_list_head;
+    task_queue = task_list_head;
 
     asm volatile("sti");
 }
 
-cpu_context_t *scheduler_tick(cpu_context_t *context){
+cpu_context_t *sched_tick(cpu_context_t *context){
 
     current_task->context = context;
 
@@ -117,28 +110,28 @@ cpu_context_t *scheduler_tick(cpu_context_t *context){
     next->state = TASK_RUNNING;
     current_task = next;
 
-    scheduler_reap();
-
     return next->context;
 }
 
-void scheduler_init_bootstrap(void *rsp) {
-    task_t *task = &tasks[0];
+void sched_bootstrap(void *rsp) {
+    task_t *kernel_task = kmalloc(sizeof(task_t));
+    if (!kernel_task) ke_panic("Failed to allocate kernel task");
 
-    task->id = 0;
-    task->state = TASK_RUNNING;
-    task->quantum_remaining = QUANTUM;
-    task->context = (cpu_context_t *)rsp;
+    kernel_task->id = 0;
+    kernel_task->state = TASK_RUNNING;
+    kernel_task->quantum_remaining = QUANTUM;
+    kernel_task->context = (cpu_context_t *)rsp;
+    kernel_task->next = kernel_task;
 
-    task->next = task;
-    current_task = task;
-    task_queue = task;
+    current_task = kernel_task;
+    task_queue = kernel_task;
+    task_list_head = kernel_task;
 }
 
 __attribute__((noreturn))
-void task_exit(void){
-    if (current_task->id == 0)
-        ke_panic("Kernel Thread Died");
+void exit(void){
+    if (current_task->id == 0 || current_task->id == 1)
+        ke_panic("Critical Thread Died");
 
     serial_printf("%sTask %d has exited, marking as dead for reaping\n", LOG_INFO, current_task->id);
     current_task->state = TASK_DEAD;
@@ -147,25 +140,36 @@ void task_exit(void){
     for (;;) { asm volatile("hlt"); }
 }
 
-void scheduler_reap(void){
+void scheduler_reap(void) {
     if (!task_queue) return;
 
     task_t *prev = task_queue;
     task_t *cur = task_queue->next;
-    
+
+    int reap_count = 0;
+
     do {
         if (cur->state == TASK_DEAD && cur != current_task) {
             serial_printf("%sReaping Task %d\n", LOG_INFO, cur->id);
+            reap_count++;
             prev->next = cur->next;
 
-            cur->next = NULL;
-            cur->quantum_remaining = 0;
+            kfree(cur->kernel_stack, KERNEL_STACK_SIZE);
+            kfree(cur, sizeof(task_t));
+
             cur = prev->next;
+            if (cur == task_queue)
+                task_queue = cur->next;
+
             continue;
         }
+
         prev = cur;
         cur = cur->next;
-    } while (cur && cur != task_queue);
+    } while (cur && cur != task_queue && reap_count < MAX_REAPES_PER_CALL);
+
+    for (;;) { asm volatile("hlt"); }
+    exit();
 }
 
 // api stuff
@@ -180,8 +184,26 @@ const char *task_state_str(task_state_t state) {
     }
 }
 
-uint64_t get_task_count(){
-    return MAX_TASKS;
+uint64_t get_task_count(void) {
+    if (!task_list_head) return 0;
+
+    uint64_t count = 0;
+    task_t *task = task_list_head;
+
+    do {
+        count++;
+        task = task->next;
+    } while (task != task_list_head);
+
+    return count;
 }
 
-task_t get_task_from_tid(uint64_t tid) { return tasks[tid]; }
+void itterate_each_task(task_itteration_fn fn, void *userdata) {
+    if (!task_list_head || !fn) return;
+
+    task_t *task = task_list_head;
+    do {
+        fn(task, userdata);
+        task = task->next;
+    } while (task != task_list_head);
+}

@@ -48,8 +48,22 @@ static void draw_cursor() {
     prev_cursor = c;
 }
 
-void testdeath(void){
-    task_exit();
+/// @brief print task stuff
+/// @param task task structure
+/// @param userdata goes unused here, just null!
+static void sched_print_task(task_t *task, void *userdata) {
+    (void)userdata;
+
+    if (task->state == TASK_READY ||
+        task->state == TASK_RUNNING ||
+        task->state == TASK_DEAD) {
+
+        kprintf("%s%llu%s\t%s\t%u\n",
+            CYAN_FG, task->id, RESET,
+            task_state_str(task->state),
+            task->quantum_remaining
+        );
+    }
 }
 
 static void run_command(const char *cmd) {
@@ -116,29 +130,9 @@ static void run_command(const char *cmd) {
     else if (strncmp(cmd, "panic", 5) == 0){
         ke_panic("Manually Initiated Panic");
     }
-    else if (strncmp(cmd, "schedtest", 9) == 0){
-        scheduler_apply_task(testdeath);
-    }
     else if (strncmp(cmd, "sched", 5) == 0) {
-        uint64_t count = get_task_count();
-
-        if (count == 0) {
-            kprintf("No tasks\n");
-            return;
-        }
-
         kprintf("ID\tSTATE\tQUANTUM\n");
-
-        for (uint64_t i = 0; i < count; i++) {
-            task_t task = get_task_from_tid(i);
-            if (task.state != TASK_FREE){
-                kprintf("%s%llu%s\t%s\t%u\n",
-                    CYAN_FG, task.id, RESET,
-                    task_state_str(task.state),
-                    task.quantum_remaining
-                );
-            }
-        }
+        itterate_each_task(sched_print_task, NULL);
     }
     else {
         kprintf("Unknown command: %s\n", cmd);
