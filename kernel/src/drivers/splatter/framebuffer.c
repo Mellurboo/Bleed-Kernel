@@ -4,9 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
+// TODO make splatter a seperate repo
+
 /*
     Change this to your framebuffer address and 
     thats about it!
+
+    if you are using splatter and have improved it
+    feel free to make a pr
 */
 
 extern volatile struct limine_framebuffer_request framebuffer_request;
