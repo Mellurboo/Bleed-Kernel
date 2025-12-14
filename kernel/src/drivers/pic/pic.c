@@ -3,6 +3,7 @@
 #include <drivers/ps2/ps2_keyboard.h>
 #include <drivers/pit/pit.h>
 #include <ansii.h>
+#include <sched/scheduler.h>
 
 #define PIC1        0x20    // Master PIC
 #define PIC2        0xA0    // Slave PIC
@@ -39,13 +40,6 @@ void init_pic(int master_offset, int slave_offset){
     outb(PIC2_DATA, 0xFF);    // disable all slave IRQs
 }
 
-typedef struct regs {
-    uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
-    uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
-    uint64_t vector;
-    uint64_t error; // this isnt guaranteed to mean anything
-} regs_t;
-
 void pic_eoi(uint8_t irq){
     if (irq >= 8) {
         outb(PIC2_CMD, 0x20);
@@ -54,9 +48,11 @@ void pic_eoi(uint8_t irq){
     }
 }
 //extern void irq_handler(uint8_t irq, regs_t *r) <- we will need this later, but for now ill leave it here
-void irq_handler(uint8_t irq) {
+void irq_handler(uint8_t irq, cpu_context_t *r) {
+    pic_eoi(irq);
     switch (irq) {
         case 0:
+            scheduler_tick(r);
             timer_ticks++;
             if (pit_countdown > 0)
                 pit_countdown--;
@@ -68,6 +64,4 @@ void irq_handler(uint8_t irq) {
             kprintf(LOG_WARN "pic sent us an unimplemented req\n");
             break;
     }
-
-    pic_eoi(irq);
 }

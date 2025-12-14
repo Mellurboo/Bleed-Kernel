@@ -19,6 +19,7 @@
 #include <sys/sleep.h>
 #include <fonts/psf.h>
 #include <drivers/framebuffer/framebuffer.h>
+#include <sched/scheduler.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
@@ -33,6 +34,14 @@ void load_initrd(){
     struct limine_file* initrd = module_request.response->modules[0];
     tar_extract(initrd->address, initrd->size);
     return;
+}
+
+// we give the kernel a task here
+void scheduler_start(void) {
+    uint64_t rsp;
+    asm volatile("mov %%rsp, %0" : "=r"(rsp));
+
+    scheduler_init_bootstrap((void *)rsp);
 }
 
 void splash(){
@@ -58,6 +67,8 @@ void kmain() {
     init_idt();
     init_pit(100);
     init_pic(32, 40);
+
+    scheduler_start();
     asm volatile ("sti");
 
     init_sse();

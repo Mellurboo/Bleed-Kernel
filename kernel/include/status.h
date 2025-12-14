@@ -12,6 +12,8 @@ typedef enum error_code {
     UNEXPECTED_FILE_TYPE,
     TRUNCATED,
 
+    SCHEDULER_OVERFLOW_ATTEMPT,
+
     ERROR_CODES_COUNT,
 } error_code_t;
 

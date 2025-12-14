@@ -5,6 +5,7 @@
 
 #include <drivers/ps2/ps2_keyboard.h>
 #include <drivers/framebuffer/framebuffer.h>
+#include <sched/scheduler.h>
 #include <stdio.h>
 #include <string.h>
 #include <fs/fsutils.h>
@@ -106,6 +107,26 @@ static void run_command(const char *cmd) {
     }
     else if (strncmp(cmd, "fault", 5) == 0){
         *(volatile int*)0 = 1;  //#pf
+    }
+    else if (strncmp(cmd, "sched", 5) == 0) {
+        uint64_t count = get_task_count();
+
+        if (count == 0) {
+            kprintf("No tasks\n");
+            return;
+        }
+
+        kprintf("ID\tSTATE\tQUANTUM\n");
+
+        for (uint64_t i = 0; i < count; i++) {
+            task_t task = get_task_from_tid(i);
+
+            kprintf("%s%llu%s\t%s\t%u\n",
+                CYAN_FG, task.id, RESET,
+                task_state_str(task.state),
+                task.quantum_remaining
+            );
+        }
     }
     else {
         kprintf("Unknown command: %s\n", cmd);

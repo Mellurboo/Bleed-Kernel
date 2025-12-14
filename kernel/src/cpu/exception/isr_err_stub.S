@@ -2,6 +2,8 @@
 .text
 
 .extern ke_exception_handler
+.extern scheduler_tick
+.extern pic_eoi
 
 .macro ISR_NO_ERR v
 .globl isr_\v
@@ -74,7 +76,6 @@ isr_\v:
     push r15
 
     mov rdi, rsp
-    mov rsp, rdi
     call ke_exception_handler
 
     pop r15
@@ -168,6 +169,54 @@ isr_stub_table:
     .quad isr_30
     .quad isr_31
 
+.globl irq0
+.type irq0,@function
+irq0:
+    push 0
+    push 32
+
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+
+    mov rdi, rsp
+    call scheduler_tick
+    mov rsp, rax
+
+    mov edi, 0
+    call pic_eoi
+
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
+
+    add rsp, 16
+    iretq
+.size irq0, .-irq0
 
 .macro IRQ_STUB irq vector
 .globl irq\irq
@@ -218,7 +267,6 @@ irq\irq:
 .size irq\irq, .-irq\irq
 .endm
 
-IRQ_STUB 0, 32
 IRQ_STUB 1, 33
 IRQ_STUB 2, 34
 IRQ_STUB 3, 35
