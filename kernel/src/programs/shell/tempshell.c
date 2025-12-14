@@ -3,6 +3,7 @@
     BEFORE I GET THERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 */
 
+#include <panic.h>
 #include <drivers/ps2/ps2_keyboard.h>
 #include <drivers/framebuffer/framebuffer.h>
 #include <sched/scheduler.h>
@@ -45,6 +46,10 @@ static void draw_cursor() {
     }
 
     prev_cursor = c;
+}
+
+void testdeath(void){
+    task_exit();
 }
 
 static void run_command(const char *cmd) {
@@ -108,6 +113,12 @@ static void run_command(const char *cmd) {
     else if (strncmp(cmd, "fault", 5) == 0){
         *(volatile int*)0 = 1;  //#pf
     }
+    else if (strncmp(cmd, "panic", 5) == 0){
+        ke_panic("Manually Initiated Panic");
+    }
+    else if (strncmp(cmd, "schedtest", 9) == 0){
+        scheduler_apply_task(testdeath);
+    }
     else if (strncmp(cmd, "sched", 5) == 0) {
         uint64_t count = get_task_count();
 
@@ -120,12 +131,13 @@ static void run_command(const char *cmd) {
 
         for (uint64_t i = 0; i < count; i++) {
             task_t task = get_task_from_tid(i);
-
-            kprintf("%s%llu%s\t%s\t%u\n",
-                CYAN_FG, task.id, RESET,
-                task_state_str(task.state),
-                task.quantum_remaining
-            );
+            if (task.state != TASK_FREE){
+                kprintf("%s%llu%s\t%s\t%u\n",
+                    CYAN_FG, task.id, RESET,
+                    task_state_str(task.state),
+                    task.quantum_remaining
+                );
+            }
         }
     }
     else {

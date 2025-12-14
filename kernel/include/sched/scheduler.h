@@ -17,6 +17,7 @@ typedef struct cpu_context {
 } cpu_context_t;
 
 typedef enum {
+    TASK_FREE,
     TASK_READY,
     TASK_RUNNING,
     TASK_BLOCKED,
@@ -37,8 +38,8 @@ typedef struct task {
 int scheduler_apply_task(void (*entry)(void));
 extern void scheduler_init_bootstrap(void *rsp);
 extern cpu_context_t *scheduler_tick(cpu_context_t *context);
-extern void context_switch(cpu_context_t **old, cpu_context_t *new);
 
+void task_exit(void);
 const char *task_state_str(task_state_t state);
 task_t get_task_from_tid(uint64_t tid);
 uint64_t get_task_count();

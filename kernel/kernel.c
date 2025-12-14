@@ -25,6 +25,11 @@ extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
 extern void init_pit(uint32_t freq);
 
+void dead(void){
+    task_exit();
+    for (;;){}
+}
+
 void load_initrd(){ 
     if (!module_request.response || module_request.response->module_count == 0){
         serial_printf("No Modules Found by booloader\n");
@@ -69,6 +74,7 @@ void kmain() {
     init_pic(32, 40);
 
     scheduler_start();
+    scheduler_apply_task(dead);
     asm volatile ("sti");
 
     init_sse();

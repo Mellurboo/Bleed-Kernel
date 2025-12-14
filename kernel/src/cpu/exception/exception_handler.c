@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ansii.h>
 #include <drivers/serial/serial.h>
+#include <cpu/stack_trace.h>
 #include <drivers/framebuffer/framebuffer.h>
 
 struct isr_stackframe {
@@ -48,25 +49,6 @@ const char* exception_name(uint8_t vector) {
     return vector < 32 ? names[vector] : "Unknown";
 }
 
-
-void print_stack_trace(uint64_t *rbp) {
-    kprintf("\n%sStack trace:%s\n", ORANGE_FG, RESET);
-    serial_write("\nStack Trace:\n");
-
-    for (int i = 0; i < 16 && rbp; i++) {
-        if ((uint64_t)rbp < 0x1000 || ((uint64_t)rbp & 0xF)) break;
-
-        uint64_t rip = rbp[1];
-        if (!rip) break;
-
-        kprintf("  %s0x%s%p\n", GRAY_FG, RESET, (void*)rip);
-        serial_write_hex(rip);
-        serial_write("\n");
-
-        rbp = (uint64_t*)rbp[0];
-    }
-}
-
 extern void ke_exception_handler(void *frame){
     __asm__ volatile ("cli");
     struct isr_stackframe *f = (struct isr_stackframe *)frame;
@@ -88,7 +70,7 @@ extern void ke_exception_handler(void *frame){
     kprintf("   !!!  FATAL KERNEL EXCEPTION OCCURRED  !!!\n");
     kprintf("===============================================\n" RESET);
 
-    kprintf(ORANGE_FG " EXCEPTION: %s\n" RESET, exception_name(vector));
+    kprintf(ORANGE_FG " (CPU Raised) EXCEPTION: %s\n" RESET, exception_name(vector));
     kprintf(GREEN_FG " VECTOR: %llu   ERROR: 0x%p\n", vector, (void *)err);
 
     kprintf("\n" ORANGE_FG " CPU STATE:" RESET "\n");
