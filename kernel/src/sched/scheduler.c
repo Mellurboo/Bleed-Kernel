@@ -1,6 +1,5 @@
 #include <sched/scheduler.h>
 #include <mm/heap.h>
-#include <mm/paging.h>
 #include <panic.h>
 #include "priv_scheduler.h"
 #include <mm/paging.h>
@@ -21,13 +20,6 @@ void init_scheduler(void) {
     asm volatile ("cli");
     task_queue = task_list_head;
     asm volatile ("sti");
-}
-
-static inline void switch_to_task(task_t *task) {
-    if (!task || !task->cr3)
-        return;
-
-    write_cr3(task->cr3);
 }
 
 cpu_context_t *sched_tick(cpu_context_t *context) {
@@ -54,7 +46,6 @@ cpu_context_t *sched_tick(cpu_context_t *context) {
         if (task->state == TASK_READY) {
             current_task = task;
             current_task->state = TASK_RUNNING;
-            switch_to_task(current_task);
             return current_task->context;
         }
         task = task->next;
@@ -63,7 +54,6 @@ cpu_context_t *sched_tick(cpu_context_t *context) {
     current_task->state = TASK_RUNNING;
     kprintf("Tick: current=%llu, quantum=%u, next=%llu\n",
         current_task->id, current_task->quantum_remaining, current_task->next->id);
-    switch_to_task(current_task);
 
     return current_task->context;
 }
@@ -78,8 +68,6 @@ void sched_bootstrap(void *rsp) {
     kernel_task->quantum_remaining = QUANTUM;
     kernel_task->context           = (cpu_context_t *)rsp;
     kernel_task->next              = kernel_task;
-
-    kernel_task->cr3 = read_cr3();
 
     current_task   = kernel_task;
     task_queue     = kernel_task;

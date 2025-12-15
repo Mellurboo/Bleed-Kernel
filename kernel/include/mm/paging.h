@@ -5,7 +5,6 @@
 
 #define PTE_PRESENT     (1ULL<<0)
 #define PTE_WRITABLE    (1ULL<<1)
-#define PTE_USER        (1ULL << 2)
 #define PTE_PS          (1ULL<<7)
 
 
@@ -19,8 +18,6 @@ static inline void write_cr3(uint64_t cr3){
     __asm__ volatile ("mov %0, %%cr3" :: "r"(cr3) : "memory");
 }
 
-
-void map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags);
 uint64_t create_task_page_table();
 
 void extend_paging();

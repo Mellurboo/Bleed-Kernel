@@ -33,8 +33,6 @@ typedef struct task {
     uint64_t page_table;
     uint32_t quantum_remaining;
 
-    uint64_t cr3;
-
     struct task *next;
     struct task *dead_next;
 } task_t;
