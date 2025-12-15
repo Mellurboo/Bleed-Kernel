@@ -7,6 +7,7 @@
 #include <ansii.h>
 #include <vendor/limine/limine.h>
 #include <drivers/serial/serial.h>
+#include <panic.h>
 
 #define PAGE_SIZE_4K       4096
 #define PAGE_SIZE_2M       (512 * PAGE_SIZE_4K)
@@ -90,4 +91,19 @@ void extend_paging() {
     }
 
     //kprintf(LOG_OK "Page Tables Reloaded\n");
+}
+
+uint64_t create_task_page_table() {
+    // Allocate a new PML4 for the task
+    paddr_t pml4_phys = alloc_pages(1);
+    if (!pml4_phys) ke_panic("Failed to allocate PML4 for task");
+
+    void *pml4_virt = paddr_to_vaddr(pml4_phys);
+    memset(pml4_virt, 0, 4096);
+
+    // Map kernel space from current page table
+    uint64_t cr3 = read_cr3();
+    ((uint64_t*)pml4_virt)[511] = ((uint64_t*)paddr_to_vaddr(cr3))[511];
+
+    return pml4_phys;
 }

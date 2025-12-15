@@ -2,6 +2,8 @@
 #include <mm/heap.h>
 #include <panic.h>
 #include "priv_scheduler.h"
+#include <mm/paging.h>
+#include <stdio.h>
 
 task_t *current_task   = NULL;
 task_t *task_queue     = NULL;
@@ -21,28 +23,39 @@ void init_scheduler(void) {
 }
 
 cpu_context_t *sched_tick(cpu_context_t *context) {
+    if (!current_task)
+        return context;
     current_task->context = context;
 
-    if (--current_task->quantum_remaining > 0)
+    if (current_task->quantum_remaining > 0)
+        current_task->quantum_remaining--;
+
+    if (current_task->quantum_remaining > 0)
         return context;
 
+    
     current_task->quantum_remaining = QUANTUM;
 
     if (current_task->state == TASK_RUNNING)
         current_task->state = TASK_READY;
 
     task_t *task = current_task->next;
+    task_t *start = task;
 
-    while (task != current_task) {
-        if (task->state == TASK_READY)
-            break;
+    do {
+        if (task->state == TASK_READY) {
+            current_task = task;
+            current_task->state = TASK_RUNNING;
+            return current_task->context;
+        }
         task = task->next;
-    }
+    } while (task != start);
 
-    current_task = task;
     current_task->state = TASK_RUNNING;
+    kprintf("Tick: current=%llu, quantum=%u, next=%llu\n",
+        current_task->id, current_task->quantum_remaining, current_task->next->id);
 
-    return task->context;
+    return current_task->context;
 }
 
 void sched_bootstrap(void *rsp) {

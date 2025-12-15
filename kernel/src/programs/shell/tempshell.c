@@ -13,6 +13,7 @@
 #include <fs/vfs.h>
 #include <mm/heap.h>
 #include <ansii.h>
+#include <threads/exit.h>
 
 #define LINE_BUF    256
 
@@ -65,6 +66,14 @@ static void sched_print_task(task_t *task, void *userdata) {
         );
     }
 }
+
+void task_exit_test(void) {
+    kprintf("[Test Task] Starting and will exit immediately\n");
+    exit();
+    kprintf("[Test Task] ERROR: Task did not exit!\n");
+    for (;;) __asm__("hlt");
+}
+
 
 static void run_command(const char *cmd) {
     if (strcmp(cmd, "help") == 0) {
@@ -133,6 +142,14 @@ static void run_command(const char *cmd) {
     else if (strncmp(cmd, "sched", 5) == 0) {
         kprintf("ID\tSTATE\tQUANTUM\n");
         itterate_each_task(sched_print_task, NULL);
+    }
+    else if (strncmp(cmd, "testexit", 8) == 0) {
+    int tid = sched_create_task(task_exit_test);
+    kprintf("[Shell] Created test exit task with ID %u\n", tid);
+
+    kprintf("Current Scheduler List:\n");
+    kprintf("ID\tSTATE\tQUANTUM\n");
+    itterate_each_task(sched_print_task, NULL);
     }
     else {
         kprintf("Unknown command: %s\n", cmd);

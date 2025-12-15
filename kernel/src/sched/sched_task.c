@@ -3,6 +3,7 @@
 #include <mm/heap.h>
 #include <string.h>
 #include "priv_scheduler.h"
+#include <mm/paging.h>
 
 extern task_t *task_queue;
 extern task_t *task_list_head;
@@ -25,33 +26,31 @@ static void queue_task(task_t *task) {
 
 int sched_create_task(void (*entry)(void)) {
     task_t *task = kmalloc(sizeof(task_t));
-    if (!task)
-        ke_panic("Failed to allocate task");
+    if (!task) ke_panic("Failed to allocate task");
 
-    task->id                = next_pid++;
-    task->state             = TASK_READY;
+    task->id = next_pid++;
+    task->state = TASK_READY;
     task->quantum_remaining = QUANTUM;
 
+    // Allocate a dedicated stack
     task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
-    if (!task->kernel_stack)
-        ke_panic("Failed to allocate task stack");
+    if (!task->kernel_stack) ke_panic("Failed to allocate task stack");
 
     uint64_t top = (uint64_t)task->kernel_stack + KERNEL_STACK_SIZE;
-    cpu_context_t *ctx = (cpu_context_t *)(top - sizeof(cpu_context_t));
 
+    // Place CPU context at the top of stack
+    cpu_context_t *ctx = (cpu_context_t *)(top - sizeof(cpu_context_t));
     memset(ctx, 0, sizeof(cpu_context_t));
-    ctx->rip    = (uint64_t)entry;
-    ctx->cs     = 0x08;
-    ctx->ss     = 0x10;
+    ctx->rip = (uint64_t)entry;
+    ctx->cs = 0x08;
+    ctx->ss = 0x10;
     ctx->rflags = 0x202;
-    ctx->rsp    = top;
+    ctx->rsp = top;
 
     task->context = ctx;
 
     queue_task(task);
-
-    if (!task_list_head)
-        task_list_head = task;
+    if (!task_list_head) task_list_head = task;
 
     return task->id;
 }

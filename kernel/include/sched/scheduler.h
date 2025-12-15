@@ -30,6 +30,7 @@ typedef struct task {
     cpu_context_t  *context;
 
     uint8_t *kernel_stack;
+    uint64_t page_table;
     uint32_t quantum_remaining;
 
     struct task *next;

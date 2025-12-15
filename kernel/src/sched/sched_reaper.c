@@ -54,25 +54,29 @@ void scheduler_reap(void) {
 
         while (dead_task_head && reaped < 15) {
             task_t *task = dead_task_head;
-            dead_task_head = task->dead_next;
+            if (!task) break;
 
+            dead_task_head = task->dead_next;
             if (!dead_task_head)
                 dead_task_tail = NULL;
 
             if (task == current_task)
                 continue;
 
-            serial_printf("%sReaping Task %d\n", LOG_INFO, task->id);
+            serial_printf("%sReaping Task %u\n", LOG_INFO, (unsigned int)task->id);
 
-            unlink_from_list(&task_queue, task);
-            unlink_from_list(&task_list_head, task);
+            if (task_queue)
+                unlink_from_list(&task_queue, task);
+            if (task_list_head)
+                unlink_from_list(&task_list_head, task);
 
-            kfree(task->kernel_stack, KERNEL_STACK_SIZE);
+            if (task->kernel_stack)
+                kfree(task->kernel_stack, KERNEL_STACK_SIZE);
             kfree(task, sizeof(task_t));
 
             reaped++;
         }
-
-        asm volatile ("hlt");
+        
+        sched_yield();
     }
 }

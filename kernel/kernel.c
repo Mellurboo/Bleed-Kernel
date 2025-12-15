@@ -59,6 +59,10 @@ void splash(){
     kprintf("%s\n", splash_buffer);
 }
 
+void task_a(void) {
+    exit();
+}
+
 void kmain() {
     init_serial();
     init_pmm();
@@ -71,6 +75,7 @@ void kmain() {
 
     scheduler_start();
     sched_create_task(scheduler_reap);
+    sched_create_task(task_a);
     asm volatile ("sti");
 
     init_sse();

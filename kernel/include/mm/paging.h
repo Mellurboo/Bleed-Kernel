@@ -18,6 +18,8 @@ static inline void write_cr3(uint64_t cr3){
     __asm__ volatile ("mov %0, %%cr3" :: "r"(cr3) : "memory");
 }
 
+uint64_t create_task_page_table();
+
 void extend_paging();
 
 #endif
