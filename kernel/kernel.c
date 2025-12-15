@@ -20,6 +20,7 @@
 #include <fonts/psf.h>
 #include <drivers/framebuffer/framebuffer.h>
 #include <sched/scheduler.h>
+#include <threads/exit.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
@@ -56,10 +57,6 @@ void splash(){
     inode_read(splash, splash_buffer, splash_size, 0);
 
     kprintf("%s\n", splash_buffer);
-}
-
-void dead(){
-    exit();
 }
 
 void kmain() {

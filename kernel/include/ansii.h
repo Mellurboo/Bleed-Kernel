@@ -1,5 +1,5 @@
-#ifndef ASCII_H
-#define ASCII_H 1
+#ifndef ANSI_H
+#define ANSI_H
 
 #define RESET       "\x1b[255;255;255;255;0m"
 

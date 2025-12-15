@@ -33,6 +33,7 @@ typedef struct task {
     uint32_t quantum_remaining;
 
     struct task *next;
+    struct task *dead_next;
 } task_t;
 
 typedef void (*task_itteration_fn)(task_t *task, void *userdata);
@@ -41,12 +42,14 @@ int sched_create_task(void (*entry)(void));
 extern void sched_bootstrap(void *rsp);
 extern cpu_context_t *sched_tick(cpu_context_t *context);
 void scheduler_reap(void);
-void exit(void);
+void sched_mark_task_dead();
 
 // api
 const char *task_state_str(task_state_t state);
 task_t *get_task_by_id(uint64_t tid);
 uint64_t get_task_count();
+task_t *get_current_task();
+void sched_yield(void);
 
 void itterate_each_task(task_itteration_fn fn, void *userdata);
 #endif
