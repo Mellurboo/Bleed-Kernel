@@ -2,8 +2,9 @@
 #include <panic.h>
 #include <mm/heap.h>
 #include <string.h>
-#include "priv_scheduler.h"
 #include <mm/paging.h>
+#include <mm/pmm.h>
+#include "priv_scheduler.h"
 
 extern task_t *task_queue;
 extern task_t *task_list_head;
@@ -46,8 +47,9 @@ int sched_create_task(void (*entry)(void)) {
     ctx->ss = 0x10;
     ctx->rflags = 0x202;
     ctx->rsp = top;
-
     task->context = ctx;
+
+    task->cr3 = create_task_page_table();
 
     queue_task(task);
     if (!task_list_head) task_list_head = task;
@@ -79,4 +81,14 @@ uint64_t get_task_count(void) {
     } while (task != task_list_head);
 
     return count;
+}
+
+void task_map_page(task_t *task, uint64_t vaddr) {
+    uint64_t old_cr3 = read_cr3();
+    write_cr3(task->cr3);
+
+    paddr_t p = alloc_pages(1);
+    map_page(p, vaddr, PTE_USER | PTE_WRITABLE);
+
+    write_cr3(old_cr3);
 }
