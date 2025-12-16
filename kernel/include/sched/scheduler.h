@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <mm/paging.h>
 
 #define KERNEL_STACK_SIZE   8196
 #define MAX_TASKS           64
@@ -30,8 +31,9 @@ typedef struct task {
     cpu_context_t  *context;
 
     uint8_t *kernel_stack;
-    uint64_t page_table;
     uint32_t quantum_remaining;
+
+    paddr_t page_map;
 
     struct task *next;
     struct task *dead_next;

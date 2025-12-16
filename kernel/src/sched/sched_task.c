@@ -32,15 +32,20 @@ int sched_create_task(void (*entry)(void)) {
     task->state = TASK_READY;
     task->quantum_remaining = QUANTUM;
 
-    // Allocate a dedicated stack
+    task->page_map = paging_create_address_space();
+    if(!task->page_map)
+        ke_panic("PAGE TASK ALLOCATION FAILURE");
+
     task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
-    if (!task->kernel_stack) ke_panic("Failed to allocate task stack");
+    if (!task->kernel_stack)
+        ke_panic("Failed to allocate task stack");
 
     uint64_t top = (uint64_t)task->kernel_stack + KERNEL_STACK_SIZE;
 
     // Place CPU context at the top of stack
     cpu_context_t *ctx = (cpu_context_t *)(top - sizeof(cpu_context_t));
     memset(ctx, 0, sizeof(cpu_context_t));
+
     ctx->rip = (uint64_t)entry;
     ctx->cs = 0x08;
     ctx->ss = 0x10;

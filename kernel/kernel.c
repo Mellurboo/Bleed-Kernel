@@ -21,6 +21,7 @@
 #include <drivers/framebuffer/framebuffer.h>
 #include <sched/scheduler.h>
 #include <threads/exit.h>
+#include <panic.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
@@ -60,12 +61,14 @@ void splash(){
 }
 
 void task_a(void) {
+    for (;;) {}
     exit();
 }
 
 void kmain() {
     init_serial();
     init_pmm();
+    reinit_paging();
 
     asm volatile ("cli");
     init_gdt();
@@ -80,7 +83,6 @@ void kmain() {
 
     init_sse();
 
-    extend_paging();
     vfs_mount_root();
     load_initrd();
 

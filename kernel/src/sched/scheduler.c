@@ -1,9 +1,11 @@
 #include <sched/scheduler.h>
 #include <mm/heap.h>
 #include <panic.h>
-#include "priv_scheduler.h"
 #include <mm/paging.h>
 #include <stdio.h>
+#include <drivers/serial/serial.h>
+
+#include "priv_scheduler.h"
 
 task_t *current_task   = NULL;
 task_t *task_queue     = NULL;
@@ -46,14 +48,14 @@ cpu_context_t *sched_tick(cpu_context_t *context) {
         if (task->state == TASK_READY) {
             current_task = task;
             current_task->state = TASK_RUNNING;
+            paging_switch_address_space(current_task->page_map);
+
             return current_task->context;
         }
         task = task->next;
     } while (task != start);
 
     current_task->state = TASK_RUNNING;
-    kprintf("Tick: current=%llu, quantum=%u, next=%llu\n",
-        current_task->id, current_task->quantum_remaining, current_task->next->id);
 
     return current_task->context;
 }
@@ -69,9 +71,13 @@ void sched_bootstrap(void *rsp) {
     kernel_task->context           = (cpu_context_t *)rsp;
     kernel_task->next              = kernel_task;
 
+    kernel_task->page_map = kernel_page_map;
+
     current_task   = kernel_task;
     task_queue     = kernel_task;
     task_list_head = kernel_task;
+
+    serial_printf("Kernel Task Created, tid:0\n");
 }
 
 void sched_yield(void) {
