@@ -5,6 +5,7 @@ MODULES_DIR := initrd
 
 CC := cc
 LD := ld
+OBJCOPY := objcopy
 
 CFLAGS := -g -O2 -Wall -Wpedantic -Werror -Wextra -std=gnu11 \
           -nostdinc -ffreestanding -fno-stack-protector \
@@ -28,39 +29,36 @@ KLIBC_OBJ := $(patsubst %.c,$(OBJDIR)/%.o,$(KLIBC_C)) \
              $(patsubst %.S,$(OBJDIR)/%.o,$(KLIBC_S))
 OBJ := $(KERNEL_OBJ) $(KLIBC_OBJ)
 
+KERNEL_SYM := $(MODULES_DIR)/resources/bleed-kernel.sym
+
 .PHONY: all
 all: $(IMAGE_NAME).iso
 
-# Compile C
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile assembly
 $(OBJDIR)/%.o: %.S
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Link kernel
 $(KERNEL_BIN): $(OBJ)
 	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $(OBJ) -o $@
+	@mkdir -p $(dir $(KERNEL_SYM))
+	$(OBJCOPY) --only-keep-debug $@ $(KERNEL_SYM)
 
-# pull remote stuff
 limine/limine:
 	rm -rf limine
 	git clone https://codeberg.org/Limine/Limine.git limine --branch=v10.x-binary --depth=1
 	$(MAKE) -C limine
 
-
 edk2-ovmf:
 	curl -L https://github.com/osdev0/edk2-ovmf-nightly/releases/latest/download/edk2-ovmf.tar.gz | gunzip | tar -xf -
 
-# remote stuff end
-
 .PHONY: initrd
 initrd:
-	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt initrd/resources/ttyfont.psf
+	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt initrd/resources/ttyfont.psf initrd/resources/bleed-kernel.sym
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root
@@ -72,10 +70,8 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	mkdir -p iso_root/EFI/BOOT
 	cp -v limine/BOOTX64.EFI iso_root/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI iso_root/EFI/BOOT/
-
 	mkdir -p iso_root/boot/initrd
 	cp -rv $(MODULES_DIR)/initrd_test.tar iso_root/boot/initrd/
-
 	xorriso -as mkisofs -R -r -J -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
 		-apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
