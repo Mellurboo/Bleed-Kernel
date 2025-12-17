@@ -25,6 +25,11 @@ typedef enum {
     TASK_DEAD
 } task_state_t;
 
+typedef enum {
+    KERNEL_TASK,
+    USER_TASK,
+} task_type_t;
+
 typedef struct task {
     uint64_t        id;
     task_state_t    state;
@@ -34,6 +39,7 @@ typedef struct task {
     uint32_t quantum_remaining;
 
     paddr_t page_map;
+    task_type_t type;
 
     struct task *next;
     struct task *dead_next;
@@ -41,7 +47,7 @@ typedef struct task {
 
 typedef void (*task_itteration_fn)(task_t *task, void *userdata);
 
-int sched_create_task(void (*entry)(void));
+int sched_create_task(void (*entry)(void), task_type_t type);
 extern void sched_bootstrap(void *rsp);
 extern cpu_context_t *sched_tick(cpu_context_t *context);
 void scheduler_reap(void);

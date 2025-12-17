@@ -24,17 +24,20 @@ static void queue_task(task_t *task) {
     task->next = task_queue;
 }
 
-int sched_create_task(void (*entry)(void)) {
+int sched_create_task(void (*entry)(void), task_type_t type) {
     task_t *task = kmalloc(sizeof(task_t));
     if (!task) ke_panic("Failed to allocate task");
 
     task->id = next_pid++;
     task->state = TASK_READY;
     task->quantum_remaining = QUANTUM;
+    task->type = type;
 
-    task->page_map = paging_create_address_space();
-    if(!task->page_map)
-        ke_panic("PAGE TASK ALLOCATION FAILURE");
+    if (type == KERNEL_TASK) {
+        task->page_map = kernel_page_map;
+    } else {
+        task->page_map = paging_create_address_space();
+    }
 
     task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
     if (!task->kernel_stack)

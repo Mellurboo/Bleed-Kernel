@@ -6,7 +6,14 @@
 
 #define PTE_PRESENT     (1ULL<<0)
 #define PTE_WRITABLE    (1ULL<<1)
+#define PTE_USER        (1ULL<<2)
 #define PTE_PS          (1ULL<<7)
+
+#define PAGE_KERNEL_RW      (PTE_WRITABLE | PTE_PS)
+#define PAGE_KERNEL_RO      (PTE_PS)
+#define PAGE_USER_RW        (PTE_WRITABLE | PTE_USER)
+#define PAGE_USER_RO        (PTE_USER)
+
 
 extern paddr_t cr3_paddr;
 extern paddr_t kernel_page_map;

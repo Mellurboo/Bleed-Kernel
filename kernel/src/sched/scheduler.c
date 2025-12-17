@@ -48,7 +48,9 @@ cpu_context_t *sched_tick(cpu_context_t *context) {
         if (task->state == TASK_READY) {
             current_task = task;
             current_task->state = TASK_RUNNING;
-            paging_switch_address_space(current_task->page_map);
+            if (task->type != KERNEL_TASK){
+                paging_switch_address_space(current_task->page_map);
+            }
 
             return current_task->context;
         }

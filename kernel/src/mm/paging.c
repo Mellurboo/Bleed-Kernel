@@ -67,7 +67,7 @@ void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
     paging_walk_page_tables(vaddr, &pd, &pd_index);
     if (!pd) return;
 
-    pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT | PTE_WRITABLE | PTE_PS;
+    pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
     __asm__ volatile ("invlpg (%0)" :: "r"(vaddr) : "memory");
 }
 
@@ -98,7 +98,7 @@ void reinit_paging() {
             void* hv = paddr_to_vaddr(paddr);
             if (!hv) continue;
 
-            paging_map_page(paddr, (paddr_t)hv, 0);
+            paging_map_page(paddr, (paddr_t)hv, PAGE_KERNEL_RW);
             mapped++;
         }
     }
@@ -118,8 +118,10 @@ paddr_t paging_create_address_space(void){
     uint64_t *kernel_pml4 = (uint64_t *)paddr_to_vaddr(kernel_page_map);
     uint64_t *new_pml4 = (uint64_t *)vaddr;
 
+    memset(new_pml4, 0, PAGE_SIZE);
+
     for (size_t i = 256; i < 512; i++){
-        new_pml4[i] = kernel_pml4[i];
+        new_pml4[i] = kernel_pml4[i] & ~PTE_USER;
     }
 
     serial_printf("Created address space at %p\n", (void*)pml4_paddr);

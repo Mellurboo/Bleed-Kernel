@@ -73,8 +73,12 @@ void scheduler_reap(void) {
             if (task->kernel_stack)
                 kfree(task->kernel_stack, KERNEL_STACK_SIZE);
 
-            if (task->page_map && task->page_map != kernel_page_map)
+            if (task->type != KERNEL_TASK &&
+                task->page_map &&
+                task->page_map != kernel_page_map)
+            {
                 paging_destroy_address_space(task->page_map);
+            }
                 
             kfree(task, sizeof(task_t));
 

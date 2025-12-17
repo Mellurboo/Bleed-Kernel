@@ -61,7 +61,6 @@ void splash(){
 }
 
 void task_a(void) {
-    for (;;) {}
     exit();
 }
 
@@ -77,8 +76,8 @@ void kmain() {
     init_pic(32, 40);
 
     scheduler_start();
-    sched_create_task(scheduler_reap);
-    sched_create_task(task_a);
+    sched_create_task(scheduler_reap, KERNEL_TASK);
+    sched_create_task(task_a, USER_TASK);
     asm volatile ("sti");
 
     init_sse();
@@ -87,10 +86,9 @@ void kmain() {
     load_initrd();
 
     psf_init();
-
+    
     kprintf(LOG_INFO "Physical Memory: %ldMiB\n", get_usable_pmem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
-
     splash();
     shell_start();
 
