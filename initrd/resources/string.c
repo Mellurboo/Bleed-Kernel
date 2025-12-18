@@ -61,10 +61,13 @@ void *memmove(void *dest, const void *src, uint64_t n) {
 /// @param n size to evaluate
 /// @return result
 int memcmp(const void *s1, const void *s2, uint64_t n) {
+    test
     const uint8_t *p1 = (const uint8_t *)s1;
+    test
     const uint8_t *p2 = (const uint8_t *)s2;
-
-    for (uint64_t i = 0; i < n; i++) {
+    test
+    test
+for (uint64_t i = 0; i < n; i++) {
         if (p1[i] != p2[i]) {
             return p1[i] < p2[i] ? -1 : 1;
         }
@@ -163,7 +166,7 @@ int strcmp(const char *s1, const char *s2) {
 /// @param s1 string 1
 /// @param s2 string 2
 /// @param n number of chars to compare
-/// @return <0, 0, >0
+/// @return <0, 0, 0>
 int strncmp(const char *s1, const char *s2, uint64_t n) {
     for (uint64_t i = 0; i < n; i++) {
         if (s1[i] != s2[i]) {
@@ -254,4 +257,3 @@ char *strtok_r(char *restrict s, const char *restrict delim, char **restrict sav
     *save = NULL;
     return token_start;
 }
-

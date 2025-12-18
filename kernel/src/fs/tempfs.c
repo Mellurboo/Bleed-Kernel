@@ -115,15 +115,20 @@ long tempfs_read(INode_t* inode, void* out_buffer, size_t count, size_t offset){
         data = data->next_chunk;
         offset -= MAX_FILE_DATA_PER_CHUNK;
     }
-    for(size_t i = 0; i < count;) {
-        size_t left_to_read = count-i;
-        size_t read_remaining = left_to_read < (MAX_FILE_DATA_PER_CHUNK-offset) ? count : (MAX_FILE_DATA_PER_CHUNK-offset);
-        if(read_remaining > left_to_read) read_remaining = left_to_read;
-        memcpy((char*)out_buffer + i, file_data(data) + offset, read_remaining);
-        offset = 0;
-        i += read_remaining;
+
+    offset = 0;
+    size_t read = 0;
+
+    while(count > 0){
+        size_t bytes_to_read = count > MAX_FILE_DATA_PER_CHUNK ? MAX_FILE_DATA_PER_CHUNK : count;
+        memcpy((char*)out_buffer + offset, file_data(data), bytes_to_read);
+        data = data->next_chunk;
+        read += bytes_to_read;
+        count -= bytes_to_read;
+        offset += MAX_FILE_DATA_PER_CHUNK;
     }
-    return count;
+    
+    return read;
 }
 
 /// @brief write to an inodes data

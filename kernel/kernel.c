@@ -10,7 +10,7 @@
 #include <mm/paging.h>
 #include <drivers/serial/serial.h>
 #include <drivers/pic/pic.h>
-#include <programs/shell/tempshell.h>
+#include <exec/shell/tempshell.h>
 #include <drivers/pit/pit.h>
 #include <fs/vfs.h>
 #include <status.h>

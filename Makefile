@@ -58,7 +58,7 @@ edk2-ovmf:
 
 .PHONY: initrd
 initrd:
-	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt initrd/resources/ttyfont.psf initrd/resources/bleed-kernel.sym
+	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt initrd/resources/ttyfont.psf initrd/resources/bleed-kernel.sym initrd/resources/string.c initrd/resources/test.txt
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root
@@ -91,6 +91,7 @@ run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 		-drive if=pflash,unit=0,format=raw,file=edk2-ovmf/ovmf-code-x86_64.fd,readonly=on \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
+		-serial stdio \
 		$(QEMUFLAGS)
 
 .PHONY: clean

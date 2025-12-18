@@ -14,13 +14,14 @@
 #include <mm/heap.h>
 #include <ansii.h>
 #include <threads/exit.h>
+#include <drivers/serial/serial.h>
 
 #define LINE_BUF    256
 
 static char line[LINE_BUF];
 static int pos = 0;
 
-#define CURSOR_COLOR 0xFFFFFFFF
+#define CURSOR_COLOR 0xFFFFFF
 
 static cursor prev_cursor = {0, 0};
 static void draw_cursor() {
@@ -112,6 +113,7 @@ static void run_command(const char *cmd) {
                 return;
             }
             size_t size = vfs_filesize(inode);
+            serial_printf("%u\n", size);
             if (size == 0) {
                 kprintf("cat: %s: Empty file or read error\n", path_str);
                 inode_drop(inode);
@@ -127,8 +129,10 @@ static void run_command(const char *cmd) {
 
             long r = inode_read(inode, buffer, size, 0);
             if (r > 0) {
-                buffer[r] = 0;
+                buffer[r] = '\0';
+                serial_printf("%d/%d", r, strlen(buffer));
                 kprintf("%s", buffer);
+                serial_printf("%s", buffer);
             }
 
             kfree(buffer, size);
