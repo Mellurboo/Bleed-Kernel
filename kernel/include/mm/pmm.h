@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <vendor/limine/limine.h>
+#include <vendor/limine_bootloader/limine.h>
 
 #define PAGE_SIZE       4096
 

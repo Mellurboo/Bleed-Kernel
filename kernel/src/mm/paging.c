@@ -5,7 +5,7 @@
 #include <mm/pmm.h>
 #include <mm/paging.h>
 #include <ansii.h>
-#include <vendor/limine/limine.h>
+#include <vendor/limine_bootloader/limine.h>
 #include <drivers/serial/serial.h>
 #include <panic.h>
 #include <sched/scheduler.h>

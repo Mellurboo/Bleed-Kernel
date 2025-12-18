@@ -1,5 +1,5 @@
 // kernel/boot/limine_requests.c
-#include <vendor/limine/limine.h>
+#include <vendor/limine_bootloader/limine.h>
 
 __attribute__((used, section(".limine_requests")))
 struct limine_internal_module initrd_module = {

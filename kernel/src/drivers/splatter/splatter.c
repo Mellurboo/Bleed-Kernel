@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <vendor/limine/limine.h>
+#include <vendor/limine_bootloader/limine.h>
 #include <drivers/framebuffer/framebuffer.h>
 #include <string.h>
 

@@ -1,4 +1,4 @@
-#include <vendor/limine/limine.h>
+#include <vendor/limine_bootloader/limine.h>
 #include <drivers/serial/serial.h>
 #include <mm/pmm.h>
 #include <stdio.h>

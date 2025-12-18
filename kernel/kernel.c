@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <ansii.h>
-#include <vendor/limine/limine.h>
+#include <vendor/limine_bootloader/limine.h>
 #include <gdt/gdt.h>
 #include <idt/idt.h>
 #include <string.h>
