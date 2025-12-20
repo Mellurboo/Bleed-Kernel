@@ -14,6 +14,7 @@
 #include <ansii.h>
 #include <threads/exit.h>
 #include <drivers/serial/serial.h>
+#include <idt/idt.h>
 
 #define LINE_BUF    256
 
@@ -182,11 +183,16 @@ static void run_command(const char *cmd) {
     }
     else if (strncmp(cmd, "testexit", 8) == 0) {
     int tid = sched_create_task(task_exit_test, KERNEL_TASK);
-    kprintf("[Shell] Created test exit task with ID %u\n", tid);
+        kprintf("[Shell] Created test exit task with ID %u\n", tid);
 
-    kprintf("Current Scheduler List:\n");
-    kprintf("ID\tSTATE\tQUANTUM\n");
-    itterate_each_task(sched_print_task, NULL);
+        kprintf("Current Scheduler List:\n");
+        kprintf("ID\tSTATE\tQUANTUM\n");
+        itterate_each_task(sched_print_task, NULL);
+    }
+    else if (strncmp(cmd, "reboot", 6) == 0) {
+        idt_ptr_t bad_idt = {0, 0};
+        asm volatile("lidt %0" :: "m"(bad_idt));
+        asm volatile("int3");
     }
     else {
         kprintf("Unknown command: %s\n", cmd);

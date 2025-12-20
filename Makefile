@@ -11,7 +11,7 @@ CFLAGS := -g -O2 -Wall -Wpedantic -Werror -Wextra -std=gnu11 \
           -nostdinc -ffreestanding -fno-stack-protector \
           -fno-stack-check -fno-lto -fno-PIC -fno-pie \
           -ffunction-sections -fdata-sections -fno-omit-frame-pointer \
-          -m64 -march=x86-64 -mabi=sysv -mno-80387 -mno-mmx -mno-sse -mno-sse2 -mno-red-zone \
+          -m64 -march=x86-64 -mabi=sysv -mno-80387 -mno-mmx -mno-sse2 -mno-red-zone \
           -mcmodel=kernel -I kernel/include -I klibc/include
 
 LDFLAGS := -m elf_x86_64 -nostdlib -static -z max-page-size=0x1000 --gc-sections \
@@ -82,7 +82,7 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 16G -no-reboot -no-shutdown -serial stdio
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 16G -serial stdio
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso

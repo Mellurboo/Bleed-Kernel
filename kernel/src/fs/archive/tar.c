@@ -104,7 +104,7 @@ int tar_extract(const void* tar_data, size_t tar_size){
                             // doesnt exist logic
                             if (vfs_create(&comp_path, &next, INODE_DIRECTORY) < 0) {
                                 kprintf(LOG_ERROR "Tar: failed to create directory %s\n", component);
-                                return -TAR_EXTRACT_FAILURE;
+                                return status_print_error(TAR_EXTRACT_FAILURE);
                             }
                         }
 
@@ -127,7 +127,7 @@ int tar_extract(const void* tar_data, size_t tar_size){
         if (res < 0){
             kprintf(LOG_ERROR "Tar extract failure: %s (offset %lu)\n",
                     header->name, offset);
-            return -TAR_EXTRACT_FAILURE;
+            return status_print_error(TAR_EXTRACT_FAILURE);
         }
 
         // Write file contents
@@ -138,7 +138,7 @@ int tar_extract(const void* tar_data, size_t tar_size){
                             file_size,
                             0) < 0) {
                 kprintf(LOG_ERROR "Tar: write failed for %s\n", full_path);
-                return -TAR_EXTRACT_FAILURE;
+                return status_print_error(TAR_EXTRACT_FAILURE);
             }
         }
 

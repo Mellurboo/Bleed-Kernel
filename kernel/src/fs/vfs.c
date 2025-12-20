@@ -54,11 +54,17 @@ int vfs_lookup(const path_t* path, INode_t** out_inode){
 
         INode_t* next = NULL;
         long r = inode_lookup(current_inode, comp_start, comp_len, &next);
-        if (r < 0) return -FILE_NOT_FOUND;
+        if (r < 0){
+            return -FILE_NOT_FOUND;
+        }
 
         current_inode = next;
     }
-    if (current_inode) current_inode->shared++;
+    if (current_inode){
+        current_inode->shared++;
+    }else{
+        serial_printf(LOG_WARN "Failed to find file %s\n", path->data);
+    }
     *out_inode = current_inode;
     return 0;
 }
@@ -130,12 +136,12 @@ size_t vfs_filesize(INode_t* inode) {
 }
 
 int inode_create(INode_t* parent, const char* name, size_t namelen, INode_t** result, inode_type node_type){
-    if (parent->ops->create == NULL) return -UNIMPLEMENTED;
+    if (parent->ops->create == NULL) return status_print_error(UNIMPLEMENTED);
     return parent->ops->create(parent, name, namelen, result, node_type);
 }
 
 int inode_lookup(INode_t* dir, const char* name, size_t name_len, INode_t** result){
-    if (dir->ops->lookup == NULL) return -UNIMPLEMENTED; // Unsupported Operation
+    if (dir->ops->lookup == NULL) return status_print_error(UNIMPLEMENTED);
     return dir->ops->lookup(dir, name, name_len, result);
 }
 
@@ -145,16 +151,16 @@ void inode_drop(INode_t* inode){
 }
 
 long inode_write(INode_t* inode, const void* in_buffer, size_t count, size_t offset){
-    if (inode->ops->write == NULL) return -UNIMPLEMENTED;
+    if (inode->ops->write == NULL) return status_print_error(UNIMPLEMENTED);
     return inode->ops->write(inode, in_buffer, count, offset);
 }
 
 long inode_read(INode_t* inode, void* out_buffer, size_t count, size_t offset){
-    if (inode->ops->read == NULL) return -UNIMPLEMENTED;
+    if (inode->ops->read == NULL) return status_print_error(UNIMPLEMENTED);
     return inode->ops->read(inode, out_buffer, count, offset);
 }
 
 int vfs_readdir(INode_t* dir, size_t index, INode_t** result){
-    if(!dir || !dir->ops->readdir) return -UNIMPLEMENTED;
+    if(!dir || !dir->ops->readdir) return status_print_error(UNIMPLEMENTED);
     return dir->ops->readdir(dir, index, result);
 }

@@ -8,13 +8,14 @@ typedef enum error_code {
     FILE_NOT_FOUND,
     TAR_EXTRACT_FAILURE,
 
-    UNEXPECTED_FILE_TYPE,
-    TRUNCATED,
-
-    SCHEDULER_OVERFLOW_ATTEMPT,
     SERIAL_NOT_AVAILABLE,
 
     ERROR_CODES_COUNT,
 } error_code_t;
 
-extern const char* status_to_string(error_code_t err);
+const char* status_to_string(error_code_t err);
+
+/// @brief print the error string
+/// @param err error type
+/// @return err
+error_code_t status_print_error(error_code_t err);

@@ -146,7 +146,7 @@ paddr_t paging_alloc_pages(size_t page_count){
             return paddr;
         }
     }
-    return -OUT_OF_MEMORY;
+    return status_print_error(OUT_OF_MEMORY);
 }
 
 /// @brief frees the page(s)

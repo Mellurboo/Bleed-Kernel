@@ -28,7 +28,7 @@ int serial_init(){
     uint8_t test = inb(PORT_COM1 + 4);
     if (test != 0x0F) {
         serial_available = 0;
-        return -SERIAL_NOT_AVAILABLE;
+        return status_print_error(SERIAL_NOT_AVAILABLE);
     }
 
     outb(PORT_COM1 + 1, 0x00);
@@ -43,7 +43,7 @@ int serial_init(){
 
     if (inb(PORT_COM1 + 0) != 0xAE){
         serial_available = 0;
-        return -SERIAL_NOT_AVAILABLE;
+        return status_print_error(SERIAL_NOT_AVAILABLE);
     }
 
     outb(PORT_COM1 + 4, 0x0F);
