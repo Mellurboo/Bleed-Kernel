@@ -18,11 +18,13 @@
 
 psf_font_t *font = NULL;
 
-psf_font_t *get_tty_font(){
-    return font;
+/// @return current loaded font
+psf_font_t *psf_get_current_font(){
+    if (font) return font;
+    else return NULL;
 }
 
-psf_font_t* psf_load_font(const void *data, size_t size){
+psf_font_t* psf_parse_font(const void *data, size_t size){
     const uint8_t *b = data;
     uint8_t mode = b[2];
     uint8_t charsize = b[3];
@@ -56,7 +58,10 @@ psf_font_t* psf_load_font(const void *data, size_t size){
     return font;
 }
 
-psf_font_t* psf_load_font_file(INode_t* inode){
+/// @brief loads a PSF font from an inode
+/// @param inode file
+/// @return font structe
+psf_font_t* psf_load_font(INode_t* inode){
     if (!inode) return NULL;
 
     size_t filesize = vfs_filesize(inode);
@@ -80,7 +85,7 @@ psf_font_t* psf_load_font_file(INode_t* inode){
     const uint8_t *b = (const uint8_t *)buffer;
 
     if (filesize >= 2 && b[0] == PSF_MAGIC_0 && b[1] == PSF_MAGIC_1) {
-        font = psf_load_font(buffer, filesize);
+        font = psf_parse_font(buffer, filesize);
     }
 
     else if (filesize >= 4 && *(const uint32_t *)b == PSF2_MAGIC) {
@@ -99,7 +104,11 @@ psf_font_t* psf_load_font_file(INode_t* inode){
     return font;
 }
 
-const uint8_t* psf_get_glyph(const psf_font_t *font, uint16_t code){
+/// @brief get a glpyh from a font given a code
+/// @param font target font
+/// @param code unsigned 16 code
+/// @return constant uint8 glyph
+const uint8_t* psf_get_glyph_font(const psf_font_t *font, uint16_t code){
     if (!font) return NULL;
 
     // PSF1 font: glyphs are indexed from 0–255, skip control chars if you want
@@ -109,21 +118,23 @@ const uint8_t* psf_get_glyph(const psf_font_t *font, uint16_t code){
     return font->glyphs + code * font->bytes_per_row * font->height;
 }
 
-void psf_init(){
-    INode_t *font_file;
-    path_t font_path;
-
-    font_path = path_from_abs("/initrd/resources/ttyfont.psf");
-    int lookup = vfs_lookup(&font_path, &font_file);
-    if (lookup < 0) return;
-    
-    font = psf_load_font_file(font_file);
-    inode_drop(font_file);
-}
-
-void psf_free(psf_font_t *font){
+/// @brief free a font and all of its contents, including structure
+/// @param font target font
+void psf_free_font(psf_font_t *font){
     if (!font) return;
     if (font->glyphs) kfree(font->glyphs, (font->glyph_count)*font->bytes_per_row);
     if (font->unicode_table) kfree(font->unicode_table, font->unicode_table_size);
     kfree(font, sizeof(psf_font_t));
+}
+
+void psf_init(const char* font_path_abs){
+    INode_t *font_file;
+    path_t font_path;
+
+    font_path = vfs_path_from_abs(font_path_abs);
+    int lookup = vfs_lookup(&font_path, &font_file);
+    if (lookup < 0) return;
+    
+    font = psf_load_font(font_file);
+    inode_drop(font_file);
 }

@@ -8,47 +8,59 @@
 
 #define TAR_BLOCK_SIZE  512
 
-static size_t tar_octal_to_size(const char *str, size_t size) {
+/// @brief turns the octal value into the size of the tar file
+/// @param str octal value
+/// @param size header size
+/// @return octal size_t
+static size_t tar_octal_to_size(const char *octal_string, size_t header_size) {
     size_t result = 0;
     size_t i = 0;
 
-    while (i < size && (str[i] == ' ' || str[i] == '\0')) i++;
-    for (; i < size && str[i] >= '0' && str[i] <= '7'; i++) {
-        result = (result << 3) + (str[i] - '0');
+    while (i < header_size && (octal_string[i] == ' ' || octal_string[i] == '\0')) i++;
+    for (; i < header_size && octal_string[i] >= '0' && octal_string[i] <= '7'; i++) {
+        result = (result << 3) + (octal_string[i] - '0');
     }
 
     return result;
 }
 
-static void build_tar_path(char* out, size_t out_size, const char* prefix, const char* name){
+/// @brief build the tars full path destination on the filesystem
+/// @param out path abs
+/// @param out_size out path size
+/// @param prefix header prefix
+/// @param name header name
+static void tar_build_path(char* path_out, size_t path_out_size, const char* header_prefix, const char* header_name){
     size_t length = 0;
-    if (prefix && prefix[0] != '\0'){
-        for (size_t i = 0; i < 155 && prefix[i] != '\0'; i++){
-            if (length < out_size - 1) out[length++] = prefix[i];
+    if (header_prefix && header_prefix[0] != '\0'){
+        for (size_t i = 0; i < 155 && header_prefix[i] != '\0'; i++){
+            if (length < path_out_size - 1) path_out[length++] = header_prefix[i];
         }
-        if (length < out_size - 1) out[length++] = '/';
+        if (length < path_out_size - 1) path_out[length++] = '/';
     }
 
-    if (name){
-        for (size_t i = 0; i < 100 && name[i] != '\0'; i++){
-            if (length < out_size -1) out[length++] = name[i];
+    if (header_name){
+        for (size_t i = 0; i < 100 && header_name[i] != '\0'; i++){
+            if (length < path_out_size -1) path_out[length++] = header_name[i];
         }
     }
-    out[length] = '\0';
+    path_out[length] = '\0';
 }
 
+/// @brief extract a tar files contents to the filesystem
+/// @param tar_data .tar file data
+/// @param tar_size .tar file size
+/// @return success
 int tar_extract(const void* tar_data, size_t tar_size){
     size_t offset = 0;
 
     while (offset + TAR_BLOCK_SIZE <= tar_size){
-
         tar_header_t* header = (tar_header_t*)((uint8_t*)tar_data + offset);
 
         if (header->name[0] == '\0')
             break;
 
         char full_path[256];
-        build_tar_path(full_path, sizeof(full_path), header->prefix, header->name);
+        tar_build_path(full_path, sizeof(full_path), header->prefix, header->name);
 
         size_t file_size = tar_octal_to_size(header->size, sizeof(header->size));
         bool is_dir = header->typeflag == '5';
@@ -90,7 +102,7 @@ int tar_extract(const void* tar_data, size_t tar_size){
                         INode_t* next = NULL;
                         if (vfs_lookup(&comp_path, &next) < 0) {
                             // doesnt exist logic
-                            if (vfs_create(&comp_path, &next, true) < 0) {
+                            if (vfs_create(&comp_path, &next, INODE_DIRECTORY) < 0) {
                                 kprintf(LOG_ERROR "Tar: failed to create directory %s\n", component);
                                 return -TAR_EXTRACT_FAILURE;
                             }
@@ -107,10 +119,10 @@ int tar_extract(const void* tar_data, size_t tar_size){
             }
         }
 
-        path_t final_path = path_from_abs(full_path);
+        path_t final_path = vfs_path_from_abs(full_path);
 
         INode_t* inode = NULL;
-        int res = vfs_create(&final_path, &inode, is_dir);
+        int res = vfs_create(&final_path, &inode, (is_dir ? INODE_DIRECTORY : INODE_FILE));
 
         if (res < 0){
             kprintf(LOG_ERROR "Tar extract failure: %s (offset %lu)\n",

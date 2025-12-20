@@ -105,7 +105,7 @@ extern void ke_exception_handler(void *frame){
 
     uint64_t cur_rbp;
     __asm__ volatile ("mov %%rbp, %0" : "=r"(cur_rbp));
-    print_stack_trace((uint64_t*)cur_rbp);
+    stack_trace_print((uint64_t*)cur_rbp);
     kprintf("\n" LOG_INFO " SYSTEM HALTED\n" RESET);
     __asm__ volatile ("hlt");
     for(;;){}

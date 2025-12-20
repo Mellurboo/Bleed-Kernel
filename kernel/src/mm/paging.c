@@ -18,9 +18,12 @@ paddr_t kernel_page_map = 0;
 
 extern volatile struct limine_memmap_request memmap_request;
 
+/// @brief allocate an empty page frame and return the paddr
+/// @param vaddr out virtual address
+/// @return physical address
 static uint64_t paging_alloc_empty_frame(void **vaddr) {
-    paddr_t paddr = alloc_pages(1);
-    if(!paddr) {}
+    paddr_t paddr = paging_alloc_pages(1);
+    if(!paddr)
         kprintf(LOG_ERROR "Page Allocation Failed, Out of Memory?\n");
 
     void* v = paddr_to_vaddr(paddr);
@@ -30,7 +33,12 @@ static uint64_t paging_alloc_empty_frame(void **vaddr) {
     return paddr;
 }
 
-uint64_t paging_write_table_entry(uint64_t* table, size_t index, uint64_t flags) {
+/// @brief write a page table at a given index, if it already exsists, we return its paddr
+/// @param table Pointer to target table
+/// @param index Index of entry to modify
+/// @param flags PTE Flags
+/// @return paddr table[index]
+static uint64_t paging_write_table_entry(uint64_t* table, size_t index, uint64_t flags) {
     uint64_t entry = table[index];
     if (entry & PTE_PRESENT) return entry & PADDR_ENTRY_MASK;
 
@@ -42,6 +50,10 @@ uint64_t paging_write_table_entry(uint64_t* table, size_t index, uint64_t flags)
     return new_entry_paddr & PADDR_ENTRY_MASK;
 }
 
+/// @brief walk page tables at PD level for a vaddr
+/// @param vaddr vaddr to resolve
+/// @param out_pd page directory pointer to resolved vaddr
+/// @param out_pd_index index of the output page directory for vaddr
 void paging_walk_page_tables(uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_index) {
     uint64_t cr3 = read_cr3() & PADDR_ENTRY_MASK;
     uint64_t* pml4_vaddr = (uint64_t*)paddr_to_vaddr(cr3);
@@ -60,6 +72,10 @@ void paging_walk_page_tables(uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_i
     *out_pd_index = pd_index;
 }
 
+/// @brief map a physical page at a vaddr using a pd entry
+/// @param paddr physical address to map the page frame at
+/// @param vaddr virtual address to map the page at
+/// @param flags PTE Flags
 void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
     uint64_t *pd;
     size_t pd_index;
@@ -71,18 +87,18 @@ void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
     __asm__ volatile ("invlpg (%0)" :: "r"(vaddr) : "memory");
 }
 
+/// @brief create the kernels page map and save it, key part of multitasking
 void paging_init_kernel_map(void) {
     kernel_page_map = read_cr3() & PADDR_ENTRY_MASK;
 
     void *pml4_vaddr = paddr_to_vaddr(kernel_page_map);
-    if (!pml4_vaddr) {
+    if (!pml4_vaddr) 
         ke_panic("Kernel PML4 not mapped");
-    }
-
-    serial_printf("Kernel Page Map = %p\n",
-                  (void*)kernel_page_map);
+    serial_printf("Kernel Page Map = %p\n", (void*)kernel_page_map);
 }
 
+/// @brief reinitalise paging so we can access a full memory range, not just the
+/// default from limine
 void reinit_paging() {
     struct limine_memmap_response* mmap = memmap_request.response;
 
@@ -106,6 +122,8 @@ void reinit_paging() {
     paging_init_kernel_map();
 }
 
+/// @brief reinitalise paging so we can access a full memory range, not just the
+/// default from limine
 paddr_t paging_create_address_space(void){
     void* vaddr = NULL;
     paddr_t pml4_paddr = paging_alloc_empty_frame(&vaddr);
@@ -128,11 +146,15 @@ paddr_t paging_create_address_space(void){
     return pml4_paddr;
 }
 
+/// @brief switch the current CR3 address space context
+/// @param cr3 cr3 paddr
 void paging_switch_address_space(paddr_t cr3){
     asm volatile("mov %0, %%cr3" :: "r"(cr3) : "memory");
 }
 
+/// @brief free address space CR3 provided
+/// @param cr3 target
 void paging_destroy_address_space(paddr_t cr3){
     if (!cr3) return;
-    free_pages(cr3, 1);
+    paging_free_pages(cr3, 1);
 }

@@ -15,8 +15,8 @@ reload_segments:
 .flush_cs:
     ret
 
-.globl load_gdt
-load_gdt:
+.globl gdt_load
+gdt_load:
     lgdt    (%rdi)
     call    reload_segments
     ret

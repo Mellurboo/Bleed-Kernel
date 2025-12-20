@@ -17,6 +17,7 @@ ansii_state_t ansi = {
     .bg = 0x00000000
 };
 
+/// @brief standard VGA colours
 static uint32_t ansi_basic_colours[8] = {
     0xFF000000,
     0xFFFF0000,
@@ -28,7 +29,9 @@ static uint32_t ansi_basic_colours[8] = {
     0xFFFFFFFF
 };
 
-void ansi_handle_char(char c) {
+/// @brief evaluate c and track its ansii state
+/// @param c target
+void framebuffer_ansi_char(char c) {
     if (ansi.esc) {
         if (c == '[') {
             ansi.csi = 1;
@@ -87,5 +90,6 @@ void ansi_handle_char(char c) {
         ansi.esc = 1;
         return;
     }
-    splatter_putc(get_tty_font(), c, ansi.fg, ansi.bg);
+    
+    framebuffer_put_char(psf_get_current_font(), c, ansi.fg, ansi.bg);
 }

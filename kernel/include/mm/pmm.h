@@ -1,5 +1,4 @@
-#ifndef PMM_H
-#define PMM_H
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -30,16 +29,16 @@ static inline paddr_t vaddr_to_paddr(void* paddr){
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
-paddr_t alloc_pages(size_t page_count);
+paddr_t paging_alloc_pages(size_t page_count);
 
 /// @brief frees the page(s)
 /// @param paddr base of the start of the free.
 /// @param page_count ammount of pages to free
-void free_pages(paddr_t paddr, size_t page_count);
+void paging_free_pages(paddr_t paddr, size_t page_count);
 
 /// @brief gets the size of physical memory available
 /// @return unsigned 64 memory size in bytes
-size_t get_usable_pmem_size();
+size_t paging_get_usable_mem_size();
 
 /// @brief gets the highest physical address
 /// @return highest paddr
@@ -47,7 +46,4 @@ uintptr_t get_max_paddr();
 
 /// @brief Physical Memory Management
 /// @return success
-uint8_t init_pmm();
-
-
-#endif
+uint8_t pmm_init();

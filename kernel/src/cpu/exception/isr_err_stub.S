@@ -3,7 +3,6 @@
 
 .extern ke_exception_handler
 .extern sched_tick
-.extern pic_eoi
 
 .macro ISR_NO_ERR v
 .globl isr_\v
@@ -195,8 +194,8 @@ irq0:
     call sched_tick
     mov rsp, rax
 
-    mov edi, 0
-    call pic_eoi
+    mov al, 0x20
+    out 0x20, al
 
     pop r15
     pop r14

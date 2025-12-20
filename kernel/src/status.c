@@ -1,7 +1,7 @@
 #include <status.h>
 #include <assert.h>
 
-static_assert(ERROR_CODES_COUNT == 9, "Update Error Codes");
+static_assert(ERROR_CODES_COUNT == 10, "Update Error Codes");
 static const char* error_code_map[] = {
     [OUT_OF_MEMORY] = "Out Of Memory",
     [OUT_OF_BOUNDS] = "Out Of Bounds",
@@ -12,6 +12,8 @@ static const char* error_code_map[] = {
     [TAR_EXTRACT_FAILURE]           = "Failed to Extract .tar file",
     [UNEXPECTED_FILE_TYPE]          = "Unexpected File Type",
     [SCHEDULER_OVERFLOW_ATTEMPT]    = "Scheduler is full and is not accepting more tasks",
+
+    [SERIAL_NOT_AVAILABLE] = "Serial Output is not available on this machine",
 
     [TRUNCATED] = "Truncated"
 };

@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <format.h>
 #include <string.h>
+#include <status.h>
 
 #define PORT_COM1   0x3F8
 #define SERIAL_TIMEOUT 100000
@@ -20,12 +21,14 @@ static int is_serial_transmit_empty(){
     return inb(PORT_COM1 + 5) & 0x20;
 }
 
-int init_serial(){
+/// @brief initialse and test the serial port so its ready for writing
+/// @return success
+int serial_init(){
     outb(PORT_COM1 + 4, 0x0F);
     uint8_t test = inb(PORT_COM1 + 4);
     if (test != 0x0F) {
         serial_available = 0;
-        return 1; // COM1 not available
+        return -SERIAL_NOT_AVAILABLE;
     }
 
     outb(PORT_COM1 + 1, 0x00);
@@ -40,7 +43,7 @@ int init_serial(){
 
     if (inb(PORT_COM1 + 0) != 0xAE){
         serial_available = 0;
-        return 1; // COM1 failed test
+        return -SERIAL_NOT_AVAILABLE;
     }
 
     outb(PORT_COM1 + 4, 0x0F);
@@ -48,11 +51,13 @@ int init_serial(){
     return 0;
 }
 
-void serial_write_char(char c){
+/// @brief put a single char, handles newline ansii
+/// @param c character to put
+void serial_put_char(char c){
     if (!serial_available) return;
 
     if (c == '\n') {
-        serial_write_char('\r');
+        serial_put_char('\r');
     }
 
     uint32_t timeout = SERIAL_TIMEOUT;
@@ -62,15 +67,18 @@ void serial_write_char(char c){
     outb(PORT_COM1, c);
 }
 
+/// @brief write a string to serial
+/// @param str const string
 void serial_write(const char* str) {
     if (!serial_available) return;
 
     while (*str) {
-        if (*str == '\n') serial_write_char('\r');
-        serial_write_char(*str++);
+        serial_put_char(*str++);
     }
 }
 
+/// @brief write a hex value to the screen from a uint
+/// @param value uint value
 void serial_write_hex(uint64_t value){
     if (!serial_available) return;
 
@@ -86,7 +94,9 @@ void serial_write_hex(uint64_t value){
     serial_write(buffer);
 }
 
-
+/// @brief Write a formatted string to COM1
+/// @param fmt formatted string
+/// @param  VARDIC
 void serial_printf(const char* fmt, ...) {
     if (!serial_available) return;
 
@@ -95,7 +105,7 @@ void serial_printf(const char* fmt, ...) {
 
     while (*fmt) {
         if (*fmt != '%') {
-            serial_write_char(*fmt++);
+            serial_put_char(*fmt++);
             continue;
         }
 
@@ -111,7 +121,7 @@ void serial_printf(const char* fmt, ...) {
 
             case 'c': {
                 char c = (char)va_arg(args, int);
-                serial_write_char(c);
+                serial_put_char(c);
                 break;
             }
 
@@ -153,13 +163,13 @@ void serial_printf(const char* fmt, ...) {
             }
 
             case '%':
-                serial_write_char('%');
+                serial_put_char('%');
                 break;
 
             default:
                 // Unknown specifier, print literally.
-                serial_write_char('%');
-                serial_write_char(*fmt);
+                serial_put_char('%');
+                serial_put_char(*fmt);
                 break;
         }
 

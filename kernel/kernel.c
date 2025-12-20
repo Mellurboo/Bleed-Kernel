@@ -14,7 +14,6 @@
 #include <drivers/pit/pit.h>
 #include <fs/vfs.h>
 #include <status.h>
-#include <fs/fsutils.h>
 #include <fs/archive/tar.h>
 #include <sys/sleep.h>
 #include <fonts/psf.h>
@@ -27,7 +26,7 @@ extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
 extern void init_pit(uint32_t freq);
 
-void load_initrd(){ 
+void initrd_load(){ 
     if (!module_request.response || module_request.response->module_count == 0){
         serial_printf("No Modules Found by booloader\n");
         return;
@@ -48,7 +47,7 @@ void scheduler_start(void) {
 
 void splash(){
     INode_t* splash = NULL;
-    path_t splash_path = path_from_abs("initrd/resources/splash.txt");
+    path_t splash_path = vfs_path_from_abs("initrd/resources/splash.txt");
 
     vfs_lookup(&splash_path, &splash);
     
@@ -65,15 +64,15 @@ void task_a(void) {
 }
 
 void kmain() {
-    init_serial();
-    init_pmm();
+    serial_init();
+    pmm_init();
     reinit_paging();
 
     asm volatile ("cli");
-    init_gdt();
-    init_idt();
+    gdt_init();
+    idt_init();
     init_pit(100);
-    init_pic(32, 40);
+    pic_init(32, 40);
 
     scheduler_start();
     sched_create_task(scheduler_reap, KERNEL_TASK);
@@ -83,11 +82,11 @@ void kmain() {
     init_sse();
 
     vfs_mount_root();
-    load_initrd();
+    initrd_load();
 
-    psf_init();
+    psf_init("initrd/resources/ttyfont.psf");
     
-    kprintf(LOG_INFO "Physical Memory: %ldMiB\n", get_usable_pmem_size() / 1024 / 1024);
+    kprintf(LOG_INFO "Physical Memory: %ldMiB\n", paging_get_usable_mem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
     splash();
     shell_start();

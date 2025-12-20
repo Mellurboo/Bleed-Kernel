@@ -3,7 +3,7 @@
 #include <ansii.h>
 #include <drivers/serial/serial.h>
 
-void print_stack_trace(uint64_t *rbp) {
+void stack_trace_print(uint64_t *rbp) {
     kprintf("\n%sStack trace:%s\n", ORANGE_FG, RESET);
     serial_write("\nStack Trace:\n");
 

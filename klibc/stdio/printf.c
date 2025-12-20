@@ -41,6 +41,6 @@ void kprintf(const char *fmt, ...){
         size = size * 2;
     }
 
-    splatter_write(buf);
+    framebuffer_write_string(buf);
     kfree(buf, size);
 }

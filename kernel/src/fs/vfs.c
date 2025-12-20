@@ -10,6 +10,15 @@ extern const filesystem tempfs;
 
 INode_t* vfs_root = NULL;
 
+/// @brief return the root dir if it exsists
+/// @return root dir
+INode_t* vfs_get_root(){
+    if (vfs_root) return vfs_root;
+    else return NULL;
+}
+
+/// @brief VFS Mount the root directory
+/// @return success?
 int vfs_mount_root(){
     int r = tempfs.mount(&vfs_root);
     if (r < 0) {
@@ -19,10 +28,8 @@ int vfs_mount_root(){
     return r;
 }
 
-INode_t* vfs_get_root(){
-    return vfs_root;
-}
-
+/// @brief decrement shared, min 0, cannot drop VFS root
+/// @param inode target
 void vfs_drop(INode_t* inode){
     if (!inode) return;
     if (inode == vfs_get_root()) return;
@@ -30,7 +37,11 @@ void vfs_drop(INode_t* inode){
     inode->shared--;
 }
 
-int vfs_lookup(const path_t* path, INode_t** inode){
+/// @brief get an inode at a path
+/// @param path target path
+/// @param inode OUT inode
+/// @return success?
+int vfs_lookup(const path_t* path, INode_t** out_inode){
     INode_t* current_inode = path->start;
     const char* head = path->data, *head_end = path->data + path->data_length;
     while(head < head_end) {
@@ -48,13 +59,18 @@ int vfs_lookup(const path_t* path, INode_t** inode){
         current_inode = next;
     }
     if (current_inode) current_inode->shared++;
-    *inode = current_inode;
+    *out_inode = current_inode;
     return 0;
 }
 
-int vfs_create(const path_t* path, INode_t** result, bool is_directory){
+/// @brief create an inode at a path
+/// @param path target path
+/// @param result result
+/// @param node_type file or directory or what?
+/// @return success?
+int vfs_create(const path_t* path, INode_t** out_result, inode_type node_type){
     INode_t* parent_inode = NULL;
-    path_t parent = parent_path(path);
+    path_t parent = vfs_parent_path(path);
 
     int e = vfs_lookup(&parent, &parent_inode);
     if (e < 0) return e; // file doesnt exsist (probably)
@@ -62,12 +78,15 @@ int vfs_create(const path_t* path, INode_t** result, bool is_directory){
     const char* name = parent.data + parent.data_length;
     size_t namelen = path->data_length - parent.data_length;
 
-    e = inode_create(parent_inode, name, namelen, result, is_directory);
+    e = inode_create(parent_inode, name, namelen, out_result, node_type);
     vfs_drop(parent_inode);
     return e;
 }
 
-path_t parent_path(const path_t* path){
+/// @brief get the parent path by trimming components and trailing slashes
+/// @param path child path
+/// @return trimmed path
+path_t vfs_parent_path(const path_t* path){
     const char* end = path->data + path->data_length;
     while(end > path->data && *(end-1) == '/') end--;
     while(end > path->data && *(end-1) != '/') end--;
@@ -79,7 +98,10 @@ path_t parent_path(const path_t* path){
     };
 }
 
-path_t path_from_abs(const char* path){
+/// @brief get a path_t from an absoloute path (as a string)
+/// @param path path string
+/// @return path_t
+path_t vfs_path_from_abs(const char* path){
     return (path_t){
         .root = vfs_root,
         .start = vfs_root,
@@ -107,9 +129,9 @@ size_t vfs_filesize(INode_t* inode) {
     return total;
 }
 
-int inode_create(INode_t* parent, const char* name, size_t namelen, INode_t** result, bool is_directory){
+int inode_create(INode_t* parent, const char* name, size_t namelen, INode_t** result, inode_type node_type){
     if (parent->ops->create == NULL) return -UNIMPLEMENTED;
-    return parent->ops->create(parent, name, namelen, result, is_directory);
+    return parent->ops->create(parent, name, namelen, result, node_type);
 }
 
 int inode_lookup(INode_t* dir, const char* name, size_t name_len, INode_t** result){
@@ -132,7 +154,7 @@ long inode_read(INode_t* inode, void* out_buffer, size_t count, size_t offset){
     return inode->ops->read(inode, out_buffer, count, offset);
 }
 
-int vfs_readdir (INode_t* dir, size_t index, INode_t** result){
+int vfs_readdir(INode_t* dir, size_t index, INode_t** result){
     if(!dir || !dir->ops->readdir) return -UNIMPLEMENTED;
     return dir->ops->readdir(dir, index, result);
 }

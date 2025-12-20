@@ -1,8 +1,7 @@
-#ifndef STACK_TRACE_H
-#define STACK_TRACE_H
+#pragma once
 
 #include <stdint.h>
 
-void print_stack_trace(uint64_t *rbp);
-
-#endif
+/// @brief print the walk of RBP as hexidecimal
+/// @param rbp frame pointer
+void stack_trace_print(uint64_t *rbp);

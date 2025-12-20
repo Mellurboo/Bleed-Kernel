@@ -1,5 +1,4 @@
-#ifndef GDT_H
-#define GDT_H 1
+#pragma once
 
 #include <stdint.h>
 
@@ -18,6 +17,5 @@ struct gdt_ptr_t{
     void* address;
 } __attribute__((packed));
 
-void init_gdt();
-
-#endif
+/// @brief initalise the better gdt, replacing the one from LIMINE
+void gdt_init();

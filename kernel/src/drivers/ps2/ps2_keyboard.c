@@ -32,20 +32,20 @@ static int pop_char(void) {
     return c;
 }
 
-/// @brief keyboard request from pic
+/// @brief Handle PS2 Keyboard Interrupt from the PIC
 /// @param irq value
-void ps2_keyboard_irq(uint8_t irq) {
+void PS2_Keyboard_Interrupt(uint8_t irq) {
     uint8_t sc = inb(KBD_PORT);
 
     if (sc & 0x80) {
         sc &= ~0x80;
         if (sc == 0x2A || sc == 0x36) shift = false;
-        pic_eoi(irq);
+        PIC_EOI(irq);
         return;
     }
 
-    if (sc == 0x2A || sc == 0x36) { shift = true; pic_eoi(irq); return; }
-    if (sc == 0x3A) { caps = !caps; pic_eoi(irq); return; }
+    if (sc == 0x2A || sc == 0x36) { shift = true; PIC_EOI(irq); return; }
+    if (sc == 0x3A) { caps = !caps; PIC_EOI(irq); return; }
 
     char c = 0;
     if (sc < 128) {
@@ -58,19 +58,21 @@ void ps2_keyboard_irq(uint8_t irq) {
     }
 
     if (c) push_char(c);
-    pic_eoi(irq);
+    PIC_EOI(irq);
 }
 
 /// @brief blocking get char
 /// @return char ascii code int
-int keyboard_get_char(void) {
+int PS2_Keyboard_get_char(void) {
     int c;
     while ((c = pop_char()) == -1)
         __asm__ volatile("hlt");
     return c;
 }
 
-void keyboard_set_callback(keyboard_callback_t cb) {
+/// @brief set the PS2 Keyboard Handler
+/// @param cb 
+void PS2_Keyboard_set_callback(keyboard_callback_t cb) {
     kb_callback = cb;
 }
 

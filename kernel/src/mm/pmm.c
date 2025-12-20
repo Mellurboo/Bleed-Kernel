@@ -18,6 +18,8 @@
 
 static bitmap_entry_t* bitmap_head = NULL;
 
+/// @brief get the highest physical address
+/// @return uintptr to it
 uintptr_t get_max_paddr(){
     struct limine_memmap_response *mmap = memmap_request.response;
 
@@ -36,7 +38,7 @@ uintptr_t get_max_paddr(){
 
 /// @brief gets the size of physical memory available
 /// @return unsigned 64 memory size in bytes
-size_t get_usable_pmem_size(){
+size_t paging_get_usable_mem_size(){
     struct limine_memmap_response* mmap = memmap_request.response;
 
     size_t bytes = 0;
@@ -49,7 +51,11 @@ size_t get_usable_pmem_size(){
     return bytes;
 }
 
-void entry_mark_unavailable(bitmap_entry_t* entry, size_t start, size_t page_count){
+/// @brief make a bitmap entry as unavailable
+/// @param entry bitmap entry target
+/// @param start indexed location
+/// @param page_count pages to make unavailable
+void paging_mark_entry_unavailable(bitmap_entry_t* entry, size_t start, size_t page_count){
     for (size_t i = 0; i < page_count; i++){
         size_t index = start + i;
         entry->bitmap[index / 8] |= (FRAME_USED << (index % 8));
@@ -57,7 +63,11 @@ void entry_mark_unavailable(bitmap_entry_t* entry, size_t start, size_t page_cou
     entry->available_pages -= page_count;
 }
 
-void entry_mark_available(bitmap_entry_t* entry, size_t start, size_t page_count){
+/// @brief make a bitmap entry as available
+/// @param entry bitmap entry target
+/// @param start indexed location
+/// @param page_count pages to make unavailable
+static void paging_mark_entry_available(bitmap_entry_t* entry, size_t start, size_t page_count){
     for (size_t i = 0; i < page_count; i++){
         size_t index = start + i;
         entry->bitmap[index / 8] &= ~(FRAME_USED << (index % 8));
@@ -67,7 +77,7 @@ void entry_mark_available(bitmap_entry_t* entry, size_t start, size_t page_count
 
 /// @brief Physical Memory Management
 /// @return success
-uint8_t init_pmm() {
+uint8_t pmm_init() {
     struct limine_memmap_response* mmap = memmap_request.response;
     struct limine_hhdm_response* hhdm = hhdm_request.response;
     bitmap_entry_t** prev_tail = &bitmap_head;
@@ -86,7 +96,7 @@ uint8_t init_pmm() {
         
         memset(bmentry->bitmap, FRAME_FREE, ((bmentry->capacity) + 7) / 8);
         size_t bitmap_header_page_size = PAGE_ALIGN_UP(sizeof(bitmap_entry_t) + (bmentry->capacity + 7) / 8) / PAGE_SIZE;
-        entry_mark_unavailable(bmentry, 0, bitmap_header_page_size);
+        paging_mark_entry_unavailable(bmentry, 0, bitmap_header_page_size);
 
         serial_printf(LOG_INFO "Usable Space Bitmap created: %p of %d pages\n", (void *)bmentry, bmentry->available_pages);
     }
@@ -95,9 +105,11 @@ uint8_t init_pmm() {
     return 0;
 }
 
-/// "what the absoloute fuck" ~ dcraft
-/// to:do improve this
-static int64_t bitmap_find_free(bitmap_entry_t* entry, size_t count){
+/// @brief Finds a contiguous block of free bits in a bitmap.
+/// @param entry bitmap entry structure
+/// @param count The number of consecutive free bits required
+/// @return The starting index of the first contiguous free block if found, or -1 if no such block exists.
+static int64_t paging_bitmap_find_free(bitmap_entry_t* entry, size_t count){
     size_t free_extention = 0;
     size_t start = 0;
 
@@ -118,17 +130,17 @@ static int64_t bitmap_find_free(bitmap_entry_t* entry, size_t count){
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
-paddr_t alloc_pages(size_t page_count){
+paddr_t paging_alloc_pages(size_t page_count){
     if (page_count == 0) return 0;
     struct limine_hhdm_response* hhdm = hhdm_request.response;
     for (bitmap_entry_t* head = bitmap_head; head != NULL; head = head->next_entry){
         if (head->available_pages >= page_count){
-            int64_t start = bitmap_find_free(head, page_count);
+            int64_t start = paging_bitmap_find_free(head, page_count);
 
             if (start < 0)
                 continue;
 
-            entry_mark_unavailable(head, start, page_count);
+            paging_mark_entry_unavailable(head, start, page_count);
             uintptr_t paddr = (((paddr_t)head) - hhdm->offset) + (start * PAGE_SIZE);
 
             return paddr;
@@ -140,14 +152,14 @@ paddr_t alloc_pages(size_t page_count){
 /// @brief frees the page(s)
 /// @param paddr base of the start of the free.
 /// @param page_count ammount of pages to free
-void free_pages(paddr_t paddr, size_t page_count){
+void paging_free_pages(paddr_t paddr, size_t page_count){
     for (bitmap_entry_t* entry = bitmap_head; entry != NULL; entry = entry->next_entry){
         uintptr_t entry_start = ((paddr_t)entry) - hhdm_request.response->offset;
         uintptr_t entry_end = entry_start + entry->capacity * PAGE_SIZE;
 
         if ((uintptr_t)paddr >= entry_start && (uintptr_t)paddr < entry_end){
             size_t start = ((uintptr_t)paddr - entry_start) / PAGE_SIZE;
-            entry_mark_available(entry, start, page_count);
+            paging_mark_entry_available(entry, start, page_count);
             return;
         }
     }

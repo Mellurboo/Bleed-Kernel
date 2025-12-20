@@ -1,5 +1,4 @@
-#ifndef TAR_H
-#define TAR_H
+#pragma once
 
 #include <stdint.h>
 #include <fs/vfs.h>
@@ -24,6 +23,8 @@ typedef struct tarheader{
     char padding[12];
 } tar_header_t;
 
+/// @brief extract a tar files contents to the filesystem
+/// @param tar_data .tar file data
+/// @param tar_size .tar file size
+/// @return success
 int tar_extract(const void* tar_data, size_t tar_size);
-
-#endif

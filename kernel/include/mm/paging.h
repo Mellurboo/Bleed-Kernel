@@ -1,5 +1,4 @@
-#ifndef PAGING_H
-#define PAGING_H
+#pragma once
 
 #include <stdint.h>
 #include <mm/pmm.h>
@@ -14,7 +13,6 @@
 #define PAGE_USER_RW        (PTE_WRITABLE | PTE_USER)
 #define PAGE_USER_RO        (PTE_USER)
 
-
 extern paddr_t cr3_paddr;
 extern paddr_t kernel_page_map;
 
@@ -28,11 +26,22 @@ static inline void write_cr3(uint64_t cr3){
     __asm__ volatile ("mov %0, %%cr3" :: "r"(cr3) : "memory");
 }
 
-void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags);
-paddr_t paging_create_address_space(void);
-void paging_switch_address_space(paddr_t cr3);
-void paging_destroy_address_space(paddr_t cr3);
-
 void reinit_paging();
 
-#endif
+/// @brief map a physical page at a vaddr using a pd entry
+/// @param paddr physical address to map the page frame at
+/// @param vaddr virtual address to map the page at
+/// @param flags PTE Flags
+void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags);
+
+/// @brief reinitalise paging so we can access a full memory range, not just the
+/// default from limine
+paddr_t paging_create_address_space(void);
+
+/// @brief switch the current CR3 address space context
+/// @param cr3 cr3 paddr
+void paging_switch_address_space(paddr_t cr3);
+
+/// @brief free address space CR3 provided
+/// @param cr3 target
+void paging_destroy_address_space(paddr_t cr3);

@@ -1,6 +1,3 @@
-#ifndef TEMPSHELL_H
-#define TEMPSHELL_H
+#pragma once
 
 void shell_start(void);
-
-#endif

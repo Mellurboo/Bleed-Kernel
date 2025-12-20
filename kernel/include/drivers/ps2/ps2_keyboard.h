@@ -5,8 +5,13 @@
 
 typedef void (*keyboard_callback_t)(char c);
 
-void ps2_keyboard_irq(uint8_t irq);
-void keyboard_set_callback(keyboard_callback_t cb);
+/// @brief Handle PS2 Keyboard Interrupt from the PIC
+/// @param irq value
+void PS2_Keyboard_Interrupt(uint8_t irq);
+
+/// @brief set the PS2 Keyboard Handler
+/// @param cb 
+void PS2_Keyboard_set_callback(keyboard_callback_t cb);
 
 static const char keymap[128] = {
     0,27,'1','2','3','4','5','6','7','8','9','0','-','=', '\b',
@@ -15,7 +20,6 @@ static const char keymap[128] = {
     'v','b','n','m',',','.','/',0,'*',0,' ',0
 };
 
-// im british, this is a british kernel, born and bred. we will use the british keyboard
 static const char keymap_shift[128] = {
     0,27,'!','"','#','$','%','^','&','*','(',')','_','+','\b',
     '\t','Q','W','E','R','T','Y','U','I','O','P','{','}','\n',0,'A',

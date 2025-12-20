@@ -9,7 +9,6 @@
 #include <sched/scheduler.h>
 #include <stdio.h>
 #include <string.h>
-#include <fs/fsutils.h>
 #include <fs/vfs.h>
 #include <mm/heap.h>
 #include <ansii.h>
@@ -23,15 +22,47 @@ static int pos = 0;
 
 #define CURSOR_COLOR 0xFFFFFF
 
-static cursor prev_cursor = {0, 0};
+/// @brief prints the directory list provided
+/// @param path_str 
+void print_directory_list(const char* path_str) {
+    path_t path = vfs_path_from_abs(path_str);
+
+    INode_t* dir = NULL;
+    if (vfs_lookup(&path, &dir) < 0) {
+        kprintf(LOG_ERROR "ls: cannot access '%s'\n", path_str);
+        return;
+    }
+
+    if (dir->type != INODE_DIRECTORY) {
+        kprintf(LOG_ERROR "%s is not a directory\n", path_str);
+        vfs_drop(dir);
+        return;
+    }
+
+    kprintf("Directory Listing of %s%s%s\n\t", CYAN_FG, path.data, RESET);
+    for (size_t i = 0;; i++) {
+        INode_t* child = NULL;
+        int r = vfs_readdir(dir, i, &child);
+        if (r < 0) break;
+
+        kprintf("%s%s  ", child->type == INODE_DIRECTORY ? CYAN_FG : "", (char *)child->internal_data);
+        if (child->type == INODE_DIRECTORY) kprintf(CYAN_FG);
+        kprintf("%s", RESET);
+        vfs_drop(dir);
+    }
+
+    kprintf("\n");
+}
+
+static tty_cursor_t prev_cursor = {0, 0};
 static void draw_cursor() {
-    psf_font_t *font = get_tty_font();
-    cursor c = get_cursor_pos();
+    psf_font_t *font = psf_get_current_font();
+    tty_cursor_t c = cursor_get_position();
 
     if (!font) return;
 
-    uint32_t *fb_ptr = (uint32_t *)get_framebuffer_addr();
-    size_t pitch = get_framebuffer_pitch();
+    uint32_t *fb_ptr = (uint32_t *)framebuffer_get_addr();
+    size_t pitch = framebuffer_get_pitch();
 
     // Erase previous cursor underline
     size_t px_base = prev_cursor.x * font->width;
@@ -99,11 +130,11 @@ static void run_command(const char *cmd) {
     else if (strncmp(cmd, "ls", 2) == 0) {
         const char *path = "/";
         if (strlen(cmd) > 3) path = cmd + 3;
-        list_directory(path);
+        print_directory_list(path);
     }
     else if (strncmp(cmd, "cat ", 4) == 0) {
         const char *path_str = cmd + 4;
-        path_t path = path_from_abs(path_str);
+        path_t path = vfs_path_from_abs(path_str);
         INode_t* inode = NULL;
         if (vfs_lookup(&path, &inode) < 0) {
             kprintf("cat: %s: No such file\n", path_str);
@@ -193,7 +224,7 @@ static void handle_key(char c) {
 
 void shell_start(void) {
     kprintf(LOG_WARN "This is a very primitive shell that will be removed very soon, thanks for trying out bleed!\n");
-    keyboard_set_callback(handle_key);
+    PS2_Keyboard_set_callback(handle_key);
     kprintf("%skernel@%sbleed-kernel$ %s", RED_FG, GRAY_FG, RESET);
     draw_cursor();
 }

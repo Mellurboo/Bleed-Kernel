@@ -1,7 +1,4 @@
-#ifndef TEMPFS_H
-#define TEMPFS_H
+#pragma once
 
 typedef struct filesystem filesystem;
 extern const filesystem tempfs;
-
-#endif

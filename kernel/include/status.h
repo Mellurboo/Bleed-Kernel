@@ -1,5 +1,4 @@
-#ifndef STATUS_H
-#define STATUS_H
+#pragma once
 
 typedef enum error_code {
     OUT_OF_MEMORY,
@@ -13,10 +12,9 @@ typedef enum error_code {
     TRUNCATED,
 
     SCHEDULER_OVERFLOW_ATTEMPT,
+    SERIAL_NOT_AVAILABLE,
 
     ERROR_CODES_COUNT,
 } error_code_t;
 
 extern const char* status_to_string(error_code_t err);
-
-#endif
