@@ -37,7 +37,7 @@ void scheduler_test_self_test(void) {
 
         // avoid reserved IDs
         while (id == 0 || id == 1)
-            id = sched_create_task(sched_test_task, KERNEL_TASK);
+            id = sched_create_task(kernel_page_map, (uint64_t)sched_test_task, KERNEL_CS, KERNEL_SS);
 
         kprintf(LOG_INFO "Created test task %lu with ID %llu\n", i, id);
     }

@@ -5,7 +5,7 @@
 #include <panic.h>
 #include <ansii.h>
 
-void init_pit(uint32_t frequency) {
+void pit_init(uint32_t frequency) {
     if (frequency == 0 || frequency > PIT_FREQUENCY) {
         ke_panic("Invalid PIT frequency");
     }

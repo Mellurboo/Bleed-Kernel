@@ -1,5 +1,5 @@
 #include <panic.h>
-#include <drivers/ps2/ps2_keyboard.h>
+#include <drivers/ps2/PS2_keyboard.h>
 #include <drivers/framebuffer/framebuffer.h>
 #include <sched/scheduler.h>
 #include <stdio.h>
@@ -13,7 +13,7 @@
 #include <idt/idt.h>
 
 #define LINE_BUF        256
-#define CURSOR_COLOR    0xFFFFFF
+#define CURSOR_COLOR    0xBBBBBB;
 static char line[LINE_BUF];
 static int pos = 0;
 
@@ -142,11 +142,10 @@ static void sched_print_task(task_t *task, void *userdata) {
         task->state == TASK_RUNNING ||
         task->state == TASK_DEAD) {
 
-        kprintf("%s%llu%s\t%s\t%u\t%s\t%p\n",
+        kprintf("%s%llu%s\t%s\t%u\t%p\n",
             CYAN_FG, task->id, RESET,
             task_state_str(task->state),
             task->quantum_remaining,
-            task->type == KERNEL_TASK ? "Kernel" : "User",
             (void*)task->page_map
         );
     }
@@ -257,13 +256,6 @@ static void run_command(const char *cmd) {
     }
     else if (strncmp(cmd, "sched", 5) == 0) {
         kprintf("%sID\tSTATE\tQUANTUM\tPRIV\tMAPADDR\n%s", GRAY_FG, RESET);
-        itterate_each_task(sched_print_task, NULL);
-    }
-    else if (strncmp(cmd, "testexit", 8) == 0) {
-        int tid = sched_create_task(task_exit_test, KERNEL_TASK);
-        kprintf("[Shell] Created test exit task with ID %u\n", tid);
-        kprintf("Current Scheduler List:\n");
-        kprintf("ID\tSTATE\tQUANTUM\n");
         itterate_each_task(sched_print_task, NULL);
     }
     else if (strncmp(cmd, "reboot", 6) == 0) {

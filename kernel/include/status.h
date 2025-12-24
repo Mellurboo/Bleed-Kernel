@@ -6,9 +6,12 @@ typedef enum error_code {
     UNIMPLEMENTED,
     NAME_LIMITS,
     FILE_NOT_FOUND,
+    SHORTREAD,
     TAR_EXTRACT_FAILURE,
 
     SERIAL_NOT_AVAILABLE,
+
+    INVALID_MAGIC,
 
     ERROR_CODES_COUNT,
 } error_code_t;

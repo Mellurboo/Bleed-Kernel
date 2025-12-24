@@ -1,0 +1,95 @@
+#include <exec/elf.h>
+#include <stdint.h>
+#include <fs/vfs.h>
+#include <mm/heap.h>
+#include <mm/pmm.h>
+#include <mm/paging.h>
+#include <stdio.h>
+#include <ansii.h>
+#include <string.h>
+#include <status.h>
+
+#define ELF_MAGIC "\x7F""ELF"
+
+int elf_load(INode_t *elf_file, paddr_t cr3, uintptr_t* entry){
+    ELF64_EHDR ehdr = {0};
+    long r = vfs_read_exact(elf_file, &ehdr, sizeof(ehdr), 0);
+    if (r != 0) return r;
+
+    if (memcmp(ELF_MAGIC, ehdr.e_ident, 4) != 0){
+        kprintf(LOG_ERROR "This does not look like an elf file\n");
+        return -INVALID_MAGIC;
+    }
+
+    if (ehdr.e_type != ET_EXEC){
+        kprintf(LOG_ERROR "ELF file is not of Executable Type\n");
+        return -INVALID_MAGIC;
+    }
+
+    if (ehdr.e_ident[4] != EI_CLASS64){
+        kprintf(LOG_ERROR "This is not a 64-bit Executable, Required by Bleed\n");
+        return -INVALID_MAGIC;
+    }
+
+    if (ehdr.e_ident[5] != EI_LITTLE_ENDIAN){
+        kprintf(LOG_ERROR "Data is not encoded as Little Endian, Required by Bleed\n");
+        return -INVALID_MAGIC;
+    }
+
+    if (ehdr.e_phentsize != sizeof(ELF64_Phdr)){
+        return -INVALID_MAGIC;
+    }
+
+    size_t phdr_size = (ehdr.e_phentsize * ehdr.e_phnum);
+    ELF64_Phdr *phdr = kmalloc(phdr_size);
+    if (!phdr) return -OUT_OF_MEMORY;
+    r = vfs_read_exact(elf_file, phdr, phdr_size, ehdr.e_phoff);
+    if (r != 0) goto read_phdr;
+
+    kprintf("addr:%p, entry count:%u\n", (void*)phdr, ehdr.e_phnum);
+    for (int i = 0; i < ehdr.e_phnum; i++){
+        if (phdr[i].p_type == PT_LOAD && phdr[i].p_flags != 0){
+            uint64_t pflags = PTE_USER | PTE_PRESENT;
+            if (phdr[i].p_flags & PF_W) pflags |= PTE_WRITABLE;
+
+            uintptr_t segment_bytes = (PAGE_ALIGN_UP(phdr[i].p_vaddr + phdr[i].p_memsz)) - PAGE_ALIGN_DOWN(phdr[i].p_vaddr);
+            uintptr_t vert_segment_start = PAGE_ALIGN_DOWN(phdr[i].p_vaddr);
+            uintptr_t vert_offset = phdr[i].p_vaddr - vert_segment_start;
+
+            kprintf(LOG_INFO "Loading Section %d\n\toffset = %p\n\tvaddr = %p\n", i, (void*)phdr[i].p_offset, (void*)phdr[i].p_vaddr);
+
+            char *load_buffer = kmalloc(segment_bytes);
+
+            if (!load_buffer) {
+                r = -OUT_OF_MEMORY;
+                goto read_phdr;
+            }
+
+            memset(load_buffer, 0, segment_bytes);
+
+            if (phdr[i].p_filesz > segment_bytes - vert_offset){
+                r = -INVALID_MAGIC;
+                kfree(load_buffer, segment_bytes);
+                goto read_phdr;
+            }
+
+            r = vfs_read_exact(elf_file, load_buffer + vert_offset, phdr[i].p_filesz, phdr[i].p_offset);
+            if (r < 0){
+                kfree(load_buffer, segment_bytes);
+                goto read_phdr;
+            }
+            
+            kprintf("cr3=%p\n", (void *)cr3);
+            for (size_t i = 0; i < segment_bytes / PAGE_SIZE; i++){
+                size_t off= (i * PAGE_SIZE);
+                paging_map_page(cr3, vaddr_to_paddr(load_buffer + off), vert_segment_start + off, pflags);
+            }
+        }
+    }
+
+    *entry = ehdr.e_entry;
+
+read_phdr:
+    kfree(phdr, phdr_size);
+    return r;
+}

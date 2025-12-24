@@ -1,6 +1,6 @@
 #include <cpu/io.h>
 #include <stdio.h>
-#include <drivers/ps2/ps2_keyboard.h>
+#include <drivers/ps2/PS2_keyboard.h>
 #include <drivers/pit/pit.h>
 #include <drivers/pic/pic.h>
 #include <ansii.h>

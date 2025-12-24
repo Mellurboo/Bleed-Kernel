@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <ansii.h>
 #include <vendor/limine_bootloader/limine.h>
+#include <drivers/ps2/PS2_keyboard.h>
 #include <gdt/gdt.h>
 #include <idt/idt.h>
 #include <string.h>
@@ -21,11 +22,12 @@
 #include <drivers/framebuffer/framebuffer.h>
 #include <sched/scheduler.h>
 #include <threads/exit.h>
+#include <exec/elf_load.h>
+#include <tss/tss.h>
 #include <panic.h>
 
 extern volatile struct limine_module_request module_request;
 extern void init_sse(void);
-extern void init_pit(uint32_t freq);
 
 void initrd_load(){ 
     if (!module_request.response || module_request.response->module_count == 0){
@@ -60,6 +62,19 @@ void splash(){
     kprintf("%s\n", splash_buffer);
 }
 
+void load_elf_from_initrd(const char *path){
+    INode_t *file = NULL;
+    path_t filepath = vfs_path_from_abs(path);
+
+    vfs_lookup(&filepath, &file);
+    paddr_t cr3 = paging_create_address_space();
+
+    uintptr_t entry;
+    if (file != NULL) elf_load(file, cr3, &entry);
+    //asm volatile("cli;hlt");
+    sched_create_task(cr3, entry, USER_CS, USER_SS);
+}
+
 void kernel_self_test(){
     paging_test_self_test();
     pmm_test_self_test();
@@ -82,16 +97,19 @@ void kmain() {
 
     gdt_init();
     idt_init();
-    init_pit(1000);
+    tss_init();
+    pit_init(1000);
     pic_init(32, 40);
 
     scheduler_start();
-    sched_create_task(scheduler_reap, KERNEL_TASK);
+    sched_create_task(read_cr3(), (uint64_t)scheduler_reap, KERNEL_CS, KERNEL_SS);
     kernel_self_test();
     asm volatile ("sti");
 
     kprintf(LOG_INFO "Physical Memory: %ldMiB\n", paging_get_usable_mem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
+    PS2_Keyboard_init();
+    load_elf_from_initrd("initrd/bin/helloworld.elf");
     shell_start();
 
     for (;;){}

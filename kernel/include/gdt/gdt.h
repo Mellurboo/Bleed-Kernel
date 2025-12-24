@@ -1,6 +1,11 @@
 #pragma once
 
 #include <stdint.h>
+#include <tss/tss.h>
+
+#ifndef offsetof
+# define offsetof(type, field) ((size_t)(&((type*)(0))->field))
+#endif
 
 struct gdt_entry_t{
     uint16_t limit_16;
@@ -11,6 +16,13 @@ struct gdt_entry_t{
     uint8_t flags   : 4;
     uint8_t base_high;
 } __attribute__((packed));
+
+typedef struct GDT{
+    struct gdt_entry_t entries[7];
+    TSSSegment tss;
+} gdt_t;
+
+extern gdt_t gdt;
 
 struct gdt_ptr_t{
     uint16_t length;

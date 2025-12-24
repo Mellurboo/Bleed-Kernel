@@ -6,7 +6,7 @@
 
 extern void gdt_load(void *);
 
-struct gdt_entry_t entries[7];
+struct GDT gdt;
 struct gdt_ptr_t gdt_ptr;
 
 /// @brief set GDT entries by index
@@ -16,15 +16,15 @@ struct gdt_ptr_t gdt_ptr;
 /// @param access granularity
 /// @param flags flags
 static void set_gdt_gate(uint8_t idx, uint32_t base, uint32_t limit, uint8_t access, uint8_t flags){
-    entries[idx].base_low     = (base >> 0);
-    entries[idx].base_middle  = (base >> 16);
-    entries[idx].base_high    = (base >> 24);
+    gdt.entries[idx].base_low     = (base >> 0);
+    gdt.entries[idx].base_middle  = (base >> 16);
+    gdt.entries[idx].base_high    = (base >> 24);
 
-    entries[idx].limit_16     = (limit >> 0);     // 16 bits of the first limit
-    entries[idx].limit_8      = (limit >> 16);    // last bit of the limit
+    gdt.entries[idx].limit_16     = (limit >> 0);     // 16 bits of the first limit
+    gdt.entries[idx].limit_8      = (limit >> 16);    // last bit of the limit
 
-    entries[idx].access       = access;
-    entries[idx].flags        = flags;
+    gdt.entries[idx].access       = access;
+    gdt.entries[idx].flags        = flags;
 }
 
 /// @brief initalise the better gdt, replacing the one from LIMINE
@@ -35,8 +35,8 @@ void gdt_init(){
     set_gdt_gate(3, 0, 0xFFFFF, 0xFA, 0xA);
     set_gdt_gate(4, 0, 0xFFFFF, 0xF2, 0xC);
 
-    gdt_ptr.address = (&entries);
-    gdt_ptr.length  = ((sizeof(struct gdt_entry_t) * 7) - 1);
+    gdt_ptr.address = (&gdt);
+    gdt_ptr.length  = sizeof(gdt) - 1;
 
     gdt_load(&gdt_ptr);
     serial_printf(LOG_OK "Global Descriptor Table Loaded (GDTR=%p)\n", gdt_ptr.address);

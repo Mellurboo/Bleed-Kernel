@@ -13,6 +13,9 @@
 #define PAGE_USER_RW        (PTE_WRITABLE | PTE_USER)
 #define PAGE_USER_RO        (PTE_USER)
 
+#define PAGE_ALIGN_UP(n)   (((n) + (PAGE_SIZE-1))/PAGE_SIZE*PAGE_SIZE)
+#define PAGE_ALIGN_DOWN(n) ((n)/PAGE_SIZE*PAGE_SIZE)
+
 extern paddr_t cr3_paddr;
 extern paddr_t kernel_page_map;
 
@@ -32,7 +35,7 @@ void reinit_paging();
 /// @param paddr physical address to map the page frame at
 /// @param vaddr virtual address to map the page at
 /// @param flags PTE Flags
-void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags);
+void paging_map_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t flags);
 
 /// @brief reinitalise paging so we can access a full memory range, not just the
 /// default from limine

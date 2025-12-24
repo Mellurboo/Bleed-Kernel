@@ -17,4 +17,4 @@ uint32_t pit_read_interval_remaining();
 
 void pit_wait_ticks(uint32_t ticks);
 
-void init_pit(uint32_t frequency);
+void pit_init(uint32_t frequency);

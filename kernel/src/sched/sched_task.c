@@ -24,20 +24,15 @@ static void queue_task(task_t *task) {
     task->next = task_queue;
 }
 
-int sched_create_task(void (*entry)(void), task_type_t type) {
+int sched_create_task(uint64_t cr3, uint64_t entry, uint64_t cs, uint64_t ss) {
     task_t *task = kmalloc(sizeof(task_t));
     if (!task) ke_panic("Failed to allocate task");
 
     task->id = next_pid++;
     task->state = TASK_READY;
     task->quantum_remaining = QUANTUM;
-    task->type = type;
 
-    if (type == KERNEL_TASK) {
-        task->page_map = kernel_page_map;
-    } else {
-        task->page_map = paging_create_address_space();
-    }
+    task->page_map = cr3;
 
     task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
     if (!task->kernel_stack)
@@ -49,9 +44,9 @@ int sched_create_task(void (*entry)(void), task_type_t type) {
     cpu_context_t *ctx = (cpu_context_t *)(top - sizeof(cpu_context_t));
     memset(ctx, 0, sizeof(cpu_context_t));
 
-    ctx->rip = (uint64_t)entry;
-    ctx->cs = 0x08;
-    ctx->ss = 0x10;
+    ctx->rip = entry;
+    ctx->cs = cs;
+    ctx->ss = ss;
     ctx->rflags = 0x202;
     ctx->rsp = top;
 

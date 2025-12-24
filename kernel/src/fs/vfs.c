@@ -135,6 +135,20 @@ size_t vfs_filesize(INode_t* inode) {
     return total;
 }
 
+long vfs_read_exact(INode_t *inode, void *out_buffer, size_t exact_count, size_t offset){
+    while (exact_count > 0){
+        long r = inode_read(inode, out_buffer, exact_count, offset);
+        if (r < 0) return r;
+        if (r == 0) return status_print_error(SHORTREAD);
+
+        out_buffer = (char *)out_buffer + r;
+        exact_count -= r;
+        offset += r;
+    }
+
+    return 0;
+}
+
 int inode_create(INode_t* parent, const char* name, size_t namelen, INode_t** result, inode_type node_type){
     if (parent->ops->create == NULL) return status_print_error(UNIMPLEMENTED);
     return parent->ops->create(parent, name, namelen, result, node_type);

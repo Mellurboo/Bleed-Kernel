@@ -54,33 +54,70 @@ static uint64_t paging_write_table_entry(uint64_t* table, size_t index, uint64_t
 /// @param vaddr vaddr to resolve
 /// @param out_pd page directory pointer to resolved vaddr
 /// @param out_pd_index index of the output page directory for vaddr
-void paging_walk_page_tables(uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_index) {
-    uint64_t cr3 = read_cr3() & PADDR_ENTRY_MASK;
-    uint64_t* pml4_vaddr = (uint64_t*)paddr_to_vaddr(cr3);
+void paging_walk_page_tables(paddr_t cr3, uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_index, uint64_t flags) {
+    uint64_t ncr3 = cr3 & PADDR_ENTRY_MASK;
+    uint64_t* pml4_vaddr = (uint64_t*)paddr_to_vaddr(ncr3);
+
+    size_t pml4_index = (vaddr >> 39) & 0x1FF;
+    size_t pdpt_index = (vaddr >> 30) & 0x1FF;
+    size_t pd_index   = (vaddr >> 21) & 0x1FF;
+    size_t pt_index   = (vaddr >> 12) & 0x1FF;
+
+    uint64_t p_pdpt = paging_write_table_entry(pml4_vaddr, pml4_index, PTE_PRESENT | PTE_WRITABLE | flags);
+    uint64_t* pdpt = (uint64_t*)paddr_to_vaddr(p_pdpt);
+
+    uint64_t p_pd = paging_write_table_entry(pdpt, pdpt_index, PTE_PRESENT | PTE_WRITABLE | flags);
+    uint64_t* pd = (uint64_t*)paddr_to_vaddr(p_pd);
+
+    uint64_t p_pt = paging_write_table_entry(pd, pd_index, PTE_PRESENT | PTE_WRITABLE | flags);
+    uint64_t* pt = (uint64_t*)paddr_to_vaddr(p_pt);
+
+    *out_pd = pt;
+    *out_pd_index = pt_index;
+}
+
+void paging_walk_giant_page_tables(paddr_t cr3, uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_index, uint64_t flags) {
+    uint64_t ncr3 = cr3 & PADDR_ENTRY_MASK;
+    uint64_t* pml4_vaddr = (uint64_t*)paddr_to_vaddr(ncr3);
 
     size_t pml4_index = (vaddr >> 39) & 0x1FF;
     size_t pdpt_index = (vaddr >> 30) & 0x1FF;
     size_t pd_index   = (vaddr >> 21) & 0x1FF;
 
-    uint64_t p_pdpt = paging_write_table_entry(pml4_vaddr, pml4_index, PTE_PRESENT | PTE_WRITABLE);
+    uint64_t p_pdpt = paging_write_table_entry(pml4_vaddr, pml4_index, PTE_PRESENT | PTE_WRITABLE | flags);
     uint64_t* pdpt = (uint64_t*)paddr_to_vaddr(p_pdpt);
 
-    uint64_t p_pd = paging_write_table_entry(pdpt, pdpt_index, PTE_PRESENT | PTE_WRITABLE);
+    uint64_t p_pd = paging_write_table_entry(pdpt, pdpt_index, PTE_PRESENT | PTE_WRITABLE | flags);
     uint64_t* pd = (uint64_t*)paddr_to_vaddr(p_pd);
 
     *out_pd = pd;
     *out_pd_index = pd_index;
 }
 
+
 /// @brief map a physical page at a vaddr using a pd entry
 /// @param paddr physical address to map the page frame at
 /// @param vaddr virtual address to map the page at
 /// @param flags PTE Flags
-void paging_map_page(uint64_t paddr, uint64_t vaddr, uint64_t flags) {
+void paging_map_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t flags) {
     uint64_t *pd;
     size_t pd_index;
 
-    paging_walk_page_tables(vaddr, &pd, &pd_index);
+    paging_walk_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
+    kprintf("flags: %llu\n", flags);
+    if (!pd) return;
+
+    pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
+    __asm__ volatile ("invlpg (%0)" :: "r"(vaddr) : "memory");
+}
+
+
+void paging_map_giant_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t flags) {
+    uint64_t *pd;
+    size_t pd_index;
+
+    paging_walk_giant_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
+    kprintf("flags: %llu\n", flags);
     if (!pd) return;
 
     pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
@@ -114,7 +151,7 @@ void reinit_paging() {
             void* hv = paddr_to_vaddr(paddr);
             if (!hv) continue;
 
-            paging_map_page(paddr, (paddr_t)hv, PAGE_KERNEL_RW);
+            paging_map_giant_page(read_cr3(), paddr, (paddr_t)hv, PAGE_KERNEL_RW);
             mapped++;
         }
     }
@@ -139,9 +176,9 @@ paddr_t paging_create_address_space(void){
     memset(new_pml4, 0, PAGE_SIZE);
 
     for (size_t i = 256; i < 512; i++){
-        new_pml4[i] = kernel_pml4[i] & ~PTE_USER;
+        new_pml4[i] = kernel_pml4[i];
     }
-
+    
     serial_printf("Created address space at %p\n", (void*)pml4_paddr);
     return pml4_paddr;
 }

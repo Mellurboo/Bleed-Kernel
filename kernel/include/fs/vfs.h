@@ -67,6 +67,8 @@ void vfs_drop(INode_t* inode);
 /// @return success?
 int vfs_lookup(const path_t* path, INode_t** inode);
 
+long vfs_read_exact(INode_t *inode, void *out_buffer, size_t exact_count, size_t offset);
+
 
 int vfs_create(const path_t* path, INode_t** result, inode_type node_type);
 int vfs_readdir (INode_t* dir, size_t index, INode_t** result);
