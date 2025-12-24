@@ -104,7 +104,6 @@ void paging_map_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t flags
     size_t pd_index;
 
     paging_walk_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
-    kprintf("flags: %llu\n", flags);
     if (!pd) return;
 
     pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
@@ -117,7 +116,6 @@ void paging_map_giant_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t
     size_t pd_index;
 
     paging_walk_giant_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
-    kprintf("flags: %llu\n", flags);
     if (!pd) return;
 
     pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
@@ -179,7 +177,6 @@ paddr_t paging_create_address_space(void){
         new_pml4[i] = kernel_pml4[i];
     }
     
-    serial_printf("Created address space at %p\n", (void*)pml4_paddr);
     return pml4_paddr;
 }
 

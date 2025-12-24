@@ -46,7 +46,6 @@ int elf_load(INode_t *elf_file, paddr_t cr3, uintptr_t* entry){
     r = vfs_read_exact(elf_file, phdr, phdr_size, ehdr.e_phoff);
     if (r != 0) goto read_phdr;
 
-    kprintf("addr:%p, entry count:%u\n", (void*)phdr, ehdr.e_phnum);
     for (int i = 0; i < ehdr.e_phnum; i++){
         if (phdr[i].p_type == PT_LOAD && phdr[i].p_flags != 0){
             uint64_t pflags = PTE_USER | PTE_PRESENT;
@@ -55,8 +54,6 @@ int elf_load(INode_t *elf_file, paddr_t cr3, uintptr_t* entry){
             uintptr_t segment_bytes = (PAGE_ALIGN_UP(phdr[i].p_vaddr + phdr[i].p_memsz)) - PAGE_ALIGN_DOWN(phdr[i].p_vaddr);
             uintptr_t vert_segment_start = PAGE_ALIGN_DOWN(phdr[i].p_vaddr);
             uintptr_t vert_offset = phdr[i].p_vaddr - vert_segment_start;
-
-            kprintf(LOG_INFO "Loading Section %d\n\toffset = %p\n\tvaddr = %p\n", i, (void*)phdr[i].p_offset, (void*)phdr[i].p_vaddr);
 
             char *load_buffer = kmalloc(segment_bytes);
 
@@ -79,7 +76,6 @@ int elf_load(INode_t *elf_file, paddr_t cr3, uintptr_t* entry){
                 goto read_phdr;
             }
             
-            kprintf("cr3=%p\n", (void *)cr3);
             for (size_t i = 0; i < segment_bytes / PAGE_SIZE; i++){
                 size_t off= (i * PAGE_SIZE);
                 paging_map_page(cr3, vaddr_to_paddr(load_buffer + off), vert_segment_start + off, pflags);
