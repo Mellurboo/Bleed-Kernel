@@ -16,6 +16,16 @@ tty_cursor_t cursor_get_position() {
     return tty_cursor;
 }
 
+/// @brief set the tty cursor position
+/// @param x new x
+/// @param y new y
+/// @return new cursor position
+tty_cursor_t cursor_set_position(int x, int y){
+    tty_cursor.x = x; 
+    tty_cursor.y = y; 
+    return tty_cursor;
+}
+
 /// @brief clear the top row and shift everything up one
 /// @param background_colour 
 static void framebuffer_scroll(uint32_t background_colour) {

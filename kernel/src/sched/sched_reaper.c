@@ -2,8 +2,9 @@
 #include <drivers/serial/serial.h>
 #include <mm/heap.h>
 #include <ansii.h>
-#include "priv_scheduler.h"
 #include <sched/scheduler.h>
+#include <panic.h>
+#include "priv_scheduler.h"
 
 extern task_t *task_queue;
 extern task_t *task_list_head;
@@ -87,4 +88,6 @@ void scheduler_reap(void) {
         
         sched_yield();
     }
+
+    ke_panic("Kernel Scheduler Reaper is Dead");
 }

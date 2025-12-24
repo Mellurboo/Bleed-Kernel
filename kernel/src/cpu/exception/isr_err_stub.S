@@ -2,6 +2,7 @@
 .text
 
 .extern ke_exception_handler
+.extern timer_handle
 .extern sched_tick
 
 .macro ISR_NO_ERR v
@@ -168,8 +169,6 @@ isr_stub_table:
     .quad isr_30
     .quad isr_31
 
-.globl irq0
-.type irq0,@function
 irq0:
     push 0
     push 32
@@ -191,7 +190,7 @@ irq0:
     push r15
 
     mov rdi, rsp
-    call sched_tick
+    call timer_handle
     mov rsp, rax
 
     mov al, 0x20

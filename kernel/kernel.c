@@ -8,6 +8,7 @@
 #include <mm/pmm.h>
 #include <mm/heap.h>
 #include <mm/paging.h>
+#include <self-test/ktests.h>
 #include <drivers/serial/serial.h>
 #include <drivers/pic/pic.h>
 #include <exec/shell/tempshell.h>
@@ -47,7 +48,7 @@ void scheduler_start(void) {
 
 void splash(){
     INode_t* splash = NULL;
-    path_t splash_path = vfs_path_from_abs("initrd/resources/splash.txt");
+    path_t splash_path = vfs_path_from_abs("initrd/etc/splash.txt");
 
     vfs_lookup(&splash_path, &splash);
     
@@ -59,39 +60,42 @@ void splash(){
     kprintf("%s\n", splash_buffer);
 }
 
-void task_a(void) {
-    exit();
+void kernel_self_test(){
+    paging_test_self_test();
+    pmm_test_self_test();
+    pit_test_self_test();
+    scheduler_test_self_test();
+    vfs_test_self_test();
+    framebuffer_clear(0x000000);
 }
 
 void kmain() {
+    asm volatile ("cli");
+    init_sse();
     serial_init();
     pmm_init();
-    reinit_paging();
 
-    asm volatile ("cli");
+    reinit_paging();
+    vfs_mount_root();
+    initrd_load();
+    psf_init("initrd/fonts/ttyfont.psf");
+
     gdt_init();
     idt_init();
-    init_pit(100);
+    init_pit(1000);
     pic_init(32, 40);
 
     scheduler_start();
     sched_create_task(scheduler_reap, KERNEL_TASK);
-    sched_create_task(task_a, USER_TASK);
+    kernel_self_test();
     asm volatile ("sti");
 
-    init_sse();
-
-    vfs_mount_root();
-    initrd_load();
-
-    psf_init("initrd/resources/ttyfont.psf");
-    
     kprintf(LOG_INFO "Physical Memory: %ldMiB\n", paging_get_usable_mem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
-    splash();
     shell_start();
 
     for (;;){}
 
+    ke_panic("Kernel Main Thread Died");
     return;
 }

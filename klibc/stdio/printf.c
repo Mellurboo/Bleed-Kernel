@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <lib/nanoprintf.h>
 #include <mm/heap.h>
+#include <drivers/serial/serial.h>
 
 /// @brief formatted print to tty
 /// @param s string
@@ -42,5 +43,6 @@ void kprintf(const char *fmt, ...){
     }
 
     framebuffer_write_string(buf);
+    serial_printf("%s", buf);
     kfree(buf, size);
 }

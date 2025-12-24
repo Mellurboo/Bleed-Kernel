@@ -17,7 +17,7 @@ void ke_panic(const char* reason){
     kprintf("   !!!  FATAL KERNEL EXCEPTION OCCURRED  !!!\n");
     kprintf("===============================================\n" RESET);
 
-    kprintf(ORANGE_FG "(Kenrel Raised) EXCEPTION: %s\n", reason);
+    kprintf(ORANGE_FG "(Kernel Raised) EXCEPTION: %s\n", reason);
 
     uint64_t cur_rbp;
     __asm__ volatile ("mov %%rbp, %0" : "=r"(cur_rbp));

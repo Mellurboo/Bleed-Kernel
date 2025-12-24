@@ -1,10 +1,11 @@
 #ifndef ANSI_H
 #define ANSI_H
 
-#define RESET       "\x1b[255;255;255;255;0m"
-
 #define RGB_FG(r,g,b) "\x1b[38;2;" #r ";" #g ";" #b "m"
 #define RGB_BG(r,g,b) "\x1b[48;2;" #r ";" #g ";" #b "m"
+
+#define RESET       RGB_FG(255, 255, 255)
+#define RESET_BG    RGB_BG(0,0,0)
 
 #define LOG_INFO    "\x1b[38;2;0;200;255m[INFO]" RESET "  "
 #define LOG_OK      "\x1b[38;2;0;255;0m[OK]" RESET "    "

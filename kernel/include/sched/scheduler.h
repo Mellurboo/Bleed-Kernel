@@ -61,4 +61,6 @@ task_t *get_current_task();
 void sched_yield(void);
 
 void itterate_each_task(task_itteration_fn fn, void *userdata);
+
+extern task_t *task_list_head;
 #endif

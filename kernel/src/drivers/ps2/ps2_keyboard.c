@@ -1,6 +1,7 @@
 #include <drivers/ps2/ps2_keyboard.h>
 #include <drivers/pic/pic.h>
 #include <cpu/io.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -75,4 +76,3 @@ int PS2_Keyboard_get_char(void) {
 void PS2_Keyboard_set_callback(keyboard_callback_t cb) {
     kb_callback = cb;
 }
-

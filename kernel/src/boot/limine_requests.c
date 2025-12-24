@@ -3,8 +3,8 @@
 
 __attribute__((used, section(".limine_requests")))
 struct limine_internal_module initrd_module = {
-    .string = "initrd_test.tar",
-    .path   = "initrd/initrd_test.tar",
+    .string = "initrd.tar",
+    .path   = "initrd.tar",
     .flags  = LIMINE_INTERNAL_MODULE_REQUIRED
 };
 

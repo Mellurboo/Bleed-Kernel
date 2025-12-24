@@ -31,14 +31,18 @@ void pic_init(int master_offset, int slave_offset){
     outb(PIC2_DATA, 0xFF);    // disable all slave IRQs
 }
 
-void irq_handler(uint8_t irq, cpu_context_t *r) {
+cpu_context_t *timer_handle(cpu_context_t *r){
+    cpu_context_t *rctx = sched_tick(r);
+    timer_ticks++;
+    if (pit_countdown > 0)
+        pit_countdown--;
+    return rctx;
+}
+
+void irq_handler(uint8_t irq) {
     PIC_EOI(irq);
     switch (irq) {
         case 0:
-            sched_tick(r);
-            timer_ticks++;
-            if (pit_countdown > 0)
-                pit_countdown--;
             break;
         case 1:
             PS2_Keyboard_Interrupt(irq);

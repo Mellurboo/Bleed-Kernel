@@ -5,7 +5,6 @@
 
 void stack_trace_print(uint64_t *rbp) {
     kprintf("\n%sStack trace:%s\n", ORANGE_FG, RESET);
-    serial_write("\nStack Trace:\n");
 
     for (int i = 0; i < 16 && rbp; i++) {
         if ((uint64_t)rbp < 0x1000 || ((uint64_t)rbp & 0xF)) break;
@@ -14,8 +13,6 @@ void stack_trace_print(uint64_t *rbp) {
         if (!rip) break;
 
         kprintf("  %s0x%s%p\n", GRAY_FG, RESET, (void*)rip);
-        serial_write_hex(rip);
-        serial_write("\n");
 
         rbp = (uint64_t*)rbp[0];
     }

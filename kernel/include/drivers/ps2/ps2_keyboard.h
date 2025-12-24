@@ -1,5 +1,4 @@
-#ifndef PS2_KEYBOARD_H
-#define PS2_KEYBOARD_H
+#pragma once
 
 #include <stdint.h>
 
@@ -26,5 +25,3 @@ static const char keymap_shift[128] = {
     'S','D','F','G','H','J','K','L',':','@','~',0,'|','Z','X','C',
     'V','B','N','M','<','>','?',0,'*',0,' ',0
 };
-
-#endif

@@ -2,6 +2,8 @@
 
 #include <fonts/psf.h>
 
+extern uint32_t global_bg_color;
+
 typedef struct tty_cursor{
     uint64_t x;
     uint64_t y;  
@@ -23,6 +25,12 @@ uint64_t framebuffer_get_height();
 /// @return (x, y) terminal cursor
 tty_cursor_t cursor_get_position();
 
+/// @brief set the cursor position
+/// @param x axis
+/// @param y axis
+/// @return new cursor
+tty_cursor_t cursor_set_position(int x, int y);
+
 /// @brief write a character to the framebuffer
 /// @param font text font
 /// @param c character
@@ -37,3 +45,7 @@ void framebuffer_write_string(const char* str);
 /// @brief evaluate c and track its ansii state
 /// @param c target
 void framebuffer_ansi_char(char c);
+
+/// @brief clear the framebuffer
+/// @param color bg colour to clear with
+void framebuffer_clear(uint32_t color);

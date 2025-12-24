@@ -19,6 +19,7 @@ A 64-bit Operating System in C using the Limine Bootloader for UEFI and BIOS sys
 - [ ]  ELF Loading
 - [ ]  ACPI
 - [ ]  APIC
+- [ ]  HPET
 - [ ]  SMP
 
 ill plan more as i go along!

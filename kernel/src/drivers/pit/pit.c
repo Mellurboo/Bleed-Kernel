@@ -1,6 +1,23 @@
 #include <stdint.h>
 #include <cpu/io.h>
 #include <drivers/pit/pit.h>
+#include <stdio.h>
+#include <panic.h>
+#include <ansii.h>
+
+void init_pit(uint32_t frequency) {
+    if (frequency == 0 || frequency > PIT_FREQUENCY) {
+        ke_panic("Invalid PIT frequency");
+    }
+
+    uint32_t divisor = PIT_FREQUENCY / frequency;
+    outb(0x43, 0x36);
+
+    outb(0x40, divisor & 0xFF);       // Low byte of the divisor
+    outb(0x40, (divisor >> 8) & 0xFF); // High byte of the divisor
+
+    kprintf(LOG_OK "PIT Initialized: %d Hz\n", frequency);
+}
 
 /// @brief Current countdown value of PIT-0
 /// @return PIT fires until countdown is 0
@@ -24,4 +41,18 @@ void pit_set_event_counter(uint32_t count) {
 	outb(0x40,count&0xFF);		    // Low byte
 	outb(0x40,(count&0xFF00)>>8);	// High byte
 	return;
+}
+
+void pit_wait_ticks(uint32_t ticks) {
+    uint32_t remaining = ticks;
+
+    while (remaining > 0) {
+        uint16_t current = pit_read_interval_remaining();
+        uint16_t next;
+        do {
+            next = pit_read_interval_remaining();
+        } while (next == current);
+
+        remaining--;
+    }
 }

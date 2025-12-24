@@ -9,3 +9,12 @@ extern volatile uint64_t timer_ticks;
 /// @brief Sets the reload divisor for PIT-0
 /// @param count PIT Clock Ticks per Period
 void pit_set_event_counter(uint32_t count);
+
+
+/// @brief Current countdown value of PIT-0
+/// @return PIT fires until countdown is 0
+uint32_t pit_read_interval_remaining();
+
+void pit_wait_ticks(uint32_t ticks);
+
+void init_pit(uint32_t frequency);

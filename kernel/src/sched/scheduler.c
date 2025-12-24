@@ -4,6 +4,7 @@
 #include <mm/paging.h>
 #include <stdio.h>
 #include <drivers/serial/serial.h>
+#include <ansii.h>
 
 #include "priv_scheduler.h"
 
@@ -72,6 +73,7 @@ void sched_bootstrap(void *rsp) {
     kernel_task->quantum_remaining = QUANTUM;
     kernel_task->context           = (cpu_context_t *)rsp;
     kernel_task->next              = kernel_task;
+    kernel_task->type              = KERNEL_TASK;
 
     kernel_task->page_map = kernel_page_map;
 
@@ -79,7 +81,7 @@ void sched_bootstrap(void *rsp) {
     task_queue     = kernel_task;
     task_list_head = kernel_task;
 
-    serial_printf("Kernel Task Created, tid:0\n");
+    serial_printf(LOG_OK "Kernel Task Created, tid:0\n");
 }
 
 void sched_yield(void) {

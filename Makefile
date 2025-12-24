@@ -1,11 +1,11 @@
 IMAGE_NAME := bleed-kernel
 OBJDIR := bin/obj
 KERNEL_BIN := bin/bleed-kernel
-MODULES_DIR := initrd
-
 CC := cc
 LD := ld
 OBJCOPY := objcopy
+
+MEMSZ = 16G
 
 CFLAGS := -g -O2 -Wall -Wpedantic -Werror -Wextra -std=gnu11 \
           -nostdinc -ffreestanding -fno-stack-protector \
@@ -29,8 +29,6 @@ KLIBC_OBJ := $(patsubst %.c,$(OBJDIR)/%.o,$(KLIBC_C)) \
              $(patsubst %.S,$(OBJDIR)/%.o,$(KLIBC_S))
 OBJ := $(KERNEL_OBJ) $(KLIBC_OBJ)
 
-KERNEL_SYM := $(MODULES_DIR)/resources/bleed-kernel.sym
-
 .PHONY: all
 all: $(IMAGE_NAME).iso
 
@@ -45,8 +43,6 @@ $(OBJDIR)/%.o: %.S
 $(KERNEL_BIN): $(OBJ)
 	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $(OBJ) -o $@
-	@mkdir -p $(dir $(KERNEL_SYM))
-	$(OBJCOPY) --only-keep-debug $@ $(KERNEL_SYM)
 
 limine/limine:
 	rm -rf limine
@@ -58,7 +54,7 @@ edk2-ovmf:
 
 .PHONY: initrd
 initrd:
-	tar -cf initrd/initrd_test.tar initrd/resources/splash.txt initrd/resources/ttyfont.psf initrd/resources/bleed-kernel.sym initrd/resources/string.c initrd/resources/test.txt
+	tar -cf initrd/initrd.tar initrd/etc/splash.txt initrd/fonts/ttyfont.psf
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root
@@ -70,8 +66,8 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	mkdir -p iso_root/EFI/BOOT
 	cp -v limine/BOOTX64.EFI iso_root/EFI/BOOT/
 	cp -v limine/BOOTIA32.EFI iso_root/EFI/BOOT/
-	mkdir -p iso_root/boot/initrd
-	cp -rv $(MODULES_DIR)/initrd_test.tar iso_root/boot/initrd/
+	mkdir -p iso_root/boot
+	cp -v initrd/initrd.tar iso_root/boot/
 	xorriso -as mkisofs -R -r -J -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table -hfsplus \
 		-apm-block-size 2048 --efi-boot boot/limine/limine-uefi-cd.bin \
@@ -82,16 +78,18 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m 16G -serial stdio
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m $(MEMSZ) -serial stdio -display sdl 
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 	qemu-system-x86_64 \
-		-m 16G \
+		-m $(MEMSZ) \
 		-drive if=pflash,unit=0,format=raw,file=edk2-ovmf/ovmf-code-x86_64.fd,readonly=on \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
+		-no-shutdown -no-reboot \
 		-serial stdio \
+		-display sdl \
 		$(QEMUFLAGS)
 
 .PHONY: clean
@@ -100,3 +98,4 @@ clean:
 	find kernel klibc -name '*.o' -delete
 	find kernel klibc -name '*.d' -delete
 	find initrd -name '*.tar' -delete
+	
