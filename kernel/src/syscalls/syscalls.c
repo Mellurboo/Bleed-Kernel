@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sched/scheduler.h>
+#include <ansii.h>
 #define SYSCALL(idx, func) [idx] = (SyscallHandler)func
 
 typedef uint64_t (*SyscallHandler)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
@@ -9,8 +10,8 @@ enum {
     SYS_HELLO_WORLD
 };
 
-void sys_hello_world(){
-    kprintf("Hello from userspace!\n");
+void sys_hello_world(const char* message){
+    kprintf("%s", message);
 }
 
 #pragma GCC diagnostic push
