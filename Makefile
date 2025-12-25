@@ -5,7 +5,7 @@ CC := cc
 LD := ld
 OBJCOPY := objcopy
 
-MEMSZ = 16G
+MEMSZ = 20M
 
 CFLAGS := -g -O2 -Wall -Wpedantic -Werror -Wextra -std=gnu11 \
           -nostdinc -ffreestanding -fno-stack-protector \
@@ -78,7 +78,7 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m $(MEMSZ) -serial stdio -display sdl -no-reboot -no-shutdown -D qemu.log -d int -monitor telnet:127.0.0.1:8080,server,nowait
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m $(MEMSZ) -serial stdio -display sdl -D qemu.log -d int -monitor telnet:127.0.0.1:8080,server,nowait
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso
@@ -87,7 +87,6 @@ run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 		-drive if=pflash,unit=0,format=raw,file=edk2-ovmf/ovmf-code-x86_64.fd,readonly=on \
 		-cdrom $(IMAGE_NAME).iso \
 		-boot d \
-		-no-shutdown -no-reboot \
 		-serial stdio \
 		-display sdl \
 		$(QEMUFLAGS)

@@ -3,9 +3,10 @@
 #include <stdint.h>
 #include <tss/tss.h>
 
-#ifndef offsetof
-# define offsetof(type, field) ((size_t)(&((type*)(0))->field))
-#endif
+#define KERNEL_CS   0x8
+#define KERNEL_SS   0x10
+#define USER_CS     (0x18 | 0x3)
+#define USER_SS     (0x20 | 0x3)
 
 struct gdt_entry_t{
     uint16_t limit_16;
@@ -19,7 +20,7 @@ struct gdt_entry_t{
 
 typedef struct GDT{
     struct gdt_entry_t entries[7];
-    TSSSegment tss;
+    tss_segment_t tss;
 } gdt_t;
 
 extern gdt_t gdt;

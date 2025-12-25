@@ -5,12 +5,8 @@
 #include <stddef.h>
 #include <mm/paging.h>
 
-#define KERNEL_CS   0x8
-#define KERNEL_SS   0x10
-#define USER_CS     (0x18 | 0x3)
-#define USER_SS     (0x20 | 0x3)
-
 #define KERNEL_STACK_SIZE   8196
+
 #define MAX_TASKS           64
 #define QUANTUM             5
 

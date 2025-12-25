@@ -130,7 +130,7 @@ static int64_t paging_bitmap_find_free(bitmap_entry_t* entry, size_t count){
 /// @brief allocate pages PMM
 /// @param page_count page count (bytes / 4096) will allocate to the nearist 4096 bytes tho
 /// @return page base ptr
-paddr_t paging_alloc_pages(size_t page_count){
+paddr_t pmm_alloc_pages(size_t page_count){
     if (page_count == 0) return 0;
     struct limine_hhdm_response* hhdm = hhdm_request.response;
     for (bitmap_entry_t* head = bitmap_head; head != NULL; head = head->next_entry){
@@ -152,7 +152,7 @@ paddr_t paging_alloc_pages(size_t page_count){
 /// @brief frees the page(s)
 /// @param paddr base of the start of the free.
 /// @param page_count ammount of pages to free
-void paging_free_pages(paddr_t paddr, size_t page_count){
+void pmm_free_pages(paddr_t paddr, size_t page_count){
     for (bitmap_entry_t* entry = bitmap_head; entry != NULL; entry = entry->next_entry){
         uintptr_t entry_start = ((paddr_t)entry) - hhdm_request.response->offset;
         uintptr_t entry_end = entry_start + entry->capacity * PAGE_SIZE;

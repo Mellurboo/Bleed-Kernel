@@ -22,7 +22,7 @@ extern volatile struct limine_memmap_request memmap_request;
 /// @param vaddr out virtual address
 /// @return physical address
 static uint64_t paging_alloc_empty_frame(void **vaddr) {
-    paddr_t paddr = paging_alloc_pages(1);
+    paddr_t paddr = pmm_alloc_pages(1);
     if(!paddr)
         kprintf(LOG_ERROR "Page Allocation Failed, Out of Memory?\n");
 
@@ -69,31 +69,17 @@ void paging_walk_page_tables(paddr_t cr3, uint64_t vaddr, uint64_t **out_pd, siz
     uint64_t p_pd = paging_write_table_entry(pdpt, pdpt_index, PTE_PRESENT | PTE_WRITABLE | flags);
     uint64_t* pd = (uint64_t*)paddr_to_vaddr(p_pd);
 
-    uint64_t p_pt = paging_write_table_entry(pd, pd_index, PTE_PRESENT | PTE_WRITABLE | flags);
-    uint64_t* pt = (uint64_t*)paddr_to_vaddr(p_pt);
+    if (!(flags & PTE_PS)) {
+        uint64_t p_pt = paging_write_table_entry(pd, pd_index, PTE_PRESENT | PTE_WRITABLE | flags);
+        uint64_t* pt = (uint64_t*)paddr_to_vaddr(p_pt);
 
-    *out_pd = pt;
-    *out_pd_index = pt_index;
+        *out_pd = pt;
+        *out_pd_index = pt_index;
+    }else{
+        *out_pd = pd;
+        *out_pd_index = pd_index;
+    }
 }
-
-void paging_walk_giant_page_tables(paddr_t cr3, uint64_t vaddr, uint64_t **out_pd, size_t *out_pd_index, uint64_t flags) {
-    uint64_t ncr3 = cr3 & PADDR_ENTRY_MASK;
-    uint64_t* pml4_vaddr = (uint64_t*)paddr_to_vaddr(ncr3);
-
-    size_t pml4_index = (vaddr >> 39) & 0x1FF;
-    size_t pdpt_index = (vaddr >> 30) & 0x1FF;
-    size_t pd_index   = (vaddr >> 21) & 0x1FF;
-
-    uint64_t p_pdpt = paging_write_table_entry(pml4_vaddr, pml4_index, PTE_PRESENT | PTE_WRITABLE | flags);
-    uint64_t* pdpt = (uint64_t*)paddr_to_vaddr(p_pdpt);
-
-    uint64_t p_pd = paging_write_table_entry(pdpt, pdpt_index, PTE_PRESENT | PTE_WRITABLE | flags);
-    uint64_t* pd = (uint64_t*)paddr_to_vaddr(p_pd);
-
-    *out_pd = pd;
-    *out_pd_index = pd_index;
-}
-
 
 /// @brief map a physical page at a vaddr using a pd entry
 /// @param paddr physical address to map the page frame at
@@ -103,19 +89,11 @@ void paging_map_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t flags
     uint64_t *pd;
     size_t pd_index;
 
-    paging_walk_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
-    if (!pd) return;
-
-    pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
-    __asm__ volatile ("invlpg (%0)" :: "r"(vaddr) : "memory");
-}
-
-
-void paging_map_giant_page(paddr_t cr3, uint64_t paddr, uint64_t vaddr, uint64_t flags) {
-    uint64_t *pd;
-    size_t pd_index;
-
-    paging_walk_giant_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
+    if (flags & PTE_PS){
+        paging_walk_page_tables(cr3, vaddr, &pd, &pd_index, flags & (PTE_USER | PTE_PS));
+    }else{
+        paging_walk_page_tables(cr3, vaddr, &pd, &pd_index, flags & PTE_USER);
+    }
     if (!pd) return;
 
     pd[pd_index] = (paddr & PADDR_ENTRY_MASK) | (flags & ~PADDR_ENTRY_MASK) | PTE_PRESENT;
@@ -149,7 +127,7 @@ void reinit_paging() {
             void* hv = paddr_to_vaddr(paddr);
             if (!hv) continue;
 
-            paging_map_giant_page(read_cr3(), paddr, (paddr_t)hv, PAGE_KERNEL_RW);
+            paging_map_page(read_cr3(), paddr, (paddr_t)hv, PAGE_KERNEL_RW | PTE_PS);
             mapped++;
         }
     }
@@ -190,5 +168,5 @@ void paging_switch_address_space(paddr_t cr3){
 /// @param cr3 target
 void paging_destroy_address_space(paddr_t cr3){
     if (!cr3) return;
-    paging_free_pages(cr3, 1);
+    pmm_free_pages(cr3, 1);
 }

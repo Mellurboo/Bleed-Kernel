@@ -2,8 +2,12 @@
 #include <panic.h>
 #include <mm/heap.h>
 #include <string.h>
-#include "priv_scheduler.h"
 #include <mm/paging.h>
+
+#include "priv_scheduler.h"
+
+#define USER_STACK_TOP 0x00007ffffffff000ULL
+#define USER_STACK_SIZE 16384
 
 extern task_t *task_queue;
 extern task_t *task_list_head;
@@ -31,27 +35,40 @@ int sched_create_task(uint64_t cr3, uint64_t entry, uint64_t cs, uint64_t ss) {
     task->id = next_pid++;
     task->state = TASK_READY;
     task->quantum_remaining = QUANTUM;
-
     task->page_map = cr3;
 
+    // Kernel stack
     task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
     if (!task->kernel_stack)
-        ke_panic("Failed to allocate task stack");
+        ke_panic("Failed to allocate kernel stack");
+    uint64_t kernel_stack_top = (uint64_t)task->kernel_stack + KERNEL_STACK_SIZE;
 
-    uint64_t top = (uint64_t)task->kernel_stack + KERNEL_STACK_SIZE;
+    // --- USER STACK ---
+    uint64_t last_vpage = 0;
+    for (uint64_t page = USER_STACK_TOP - USER_STACK_SIZE; page < USER_STACK_TOP; page += PAGE_SIZE) {
+        paddr_t paddr = pmm_alloc_pages(1);
+        if (!paddr) ke_panic("Failed to allocate user stack page");
 
-    // Place CPU context at the top of stack
-    cpu_context_t *ctx = (cpu_context_t *)(top - sizeof(cpu_context_t));
+        paging_map_page(task->page_map, paddr, page, PTE_USER | PTE_WRITABLE);
+        last_vpage = page;
+    }
+    uint64_t user_stack_top = last_vpage + PAGE_SIZE; // top of last mapped page
+
+    // CPU context on kernel stack
+    cpu_context_t *ctx = (cpu_context_t *)(kernel_stack_top - sizeof(cpu_context_t));
     memset(ctx, 0, sizeof(cpu_context_t));
 
     ctx->rip = entry;
-    ctx->cs = cs;
-    ctx->ss = ss;
+    ctx->cs  = cs;
+    ctx->ss  = ss;
     ctx->rflags = 0x202;
-    ctx->rsp = top;
+
+    // Choose stack depending on user/kernel code segment
+    ctx->rsp = (cs & 0x3) ? user_stack_top : kernel_stack_top;
 
     task->context = ctx;
 
+    // Queue the task
     queue_task(task);
     if (!task_list_head) task_list_head = task;
 

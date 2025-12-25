@@ -46,8 +46,9 @@ void idt_init(){
         idt_set_descriptor(32 + irq, irq_stub_table[irq], 0x8E);
         vectors[32 + irq] = 1;
     }
-
-    idt_set_descriptor(0x80, irq80, 0xEF);
+    
+    
+    idt_set_descriptor(0x80, irq80, 0xEF);  // syscalls
 
     asm volatile ("lidt %0" : : "m"(idt_ptr));
     serial_printf(LOG_OK "Interrupt Descriptor Table Loaded (IDTR=%p)\n", (void*)idt_ptr.address);

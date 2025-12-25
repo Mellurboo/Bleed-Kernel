@@ -2,22 +2,30 @@
 #include <stdio.h>
 #include <sched/scheduler.h>
 #include <ansii.h>
+#include <threads/exit.h>
+
+#include "syscall.h"
+
 #define SYSCALL(idx, func) [idx] = (SyscallHandler)func
 
 typedef uint64_t (*SyscallHandler)(uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 
 enum {
-    SYS_HELLO_WORLD
+    SYS_READ,
+    SYS_WRITE,
+    SYS_OPEN,
+    SYS_CLOSE,
+    SYS_MKDIR,
+    SYS_RMDIR,
+    SYS_EXIT,
+    SYS_PRINT
 };
-
-void sys_hello_world(const char* message){
-    kprintf("%s", message);
-}
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 SyscallHandler syscall_handlers[] = {
-    SYSCALL(SYS_HELLO_WORLD, sys_hello_world),
+    SYSCALL(SYS_EXIT, sys_exit),
+    SYSCALL(SYS_PRINT, sys_print)
 };
 #pragma GCC diagnostic pop
 

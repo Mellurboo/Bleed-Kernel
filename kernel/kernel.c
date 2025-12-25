@@ -71,7 +71,6 @@ void load_elf_from_initrd(const char *path){
 
     uintptr_t entry;
     if (file != NULL) elf_load(file, cr3, &entry);
-    //asm volatile("cli;hlt");
     sched_create_task(cr3, entry, USER_CS, USER_SS);
 }
 
@@ -104,12 +103,12 @@ void kmain() {
     scheduler_start();
     sched_create_task(read_cr3(), (uint64_t)scheduler_reap, KERNEL_CS, KERNEL_SS);
     kernel_self_test();
+    load_elf_from_initrd("initrd/bin/helloworld.elf");
     asm volatile ("sti");
 
     kprintf(LOG_INFO "Physical Memory: %ldMiB\n", paging_get_usable_mem_size() / 1024 / 1024);
     kprintf(LOG_INFO "Highest Free PADDR: 0x%p\n", (void*)get_max_paddr());
     PS2_Keyboard_init();
-    load_elf_from_initrd("initrd/bin/helloworld.elf");
     shell_start();
 
     for (;;){}

@@ -17,8 +17,8 @@ static paddr_t SEC1, SEC2;
 static void paging_test_allocate_test_pages() {
     kprintf(LOG_INFO "Allocating Physical Pages for Paging Test\n");
     for (size_t i = 0; i < PAGING_TEST_PAGES; i++) {
-        phys_SEC1[i] = paging_alloc_pages(1);
-        phys_SEC2[i] = paging_alloc_pages(1);
+        phys_SEC1[i] = pmm_alloc_pages(1);
+        phys_SEC2[i] = pmm_alloc_pages(1);
 
         void *v1 = paddr_to_vaddr(phys_SEC1[i]);
         void *v2 = paddr_to_vaddr(phys_SEC2[i]);
@@ -73,8 +73,8 @@ static void paging_test_cleanup() {
     paging_destroy_address_space(SEC1);
     paging_destroy_address_space(SEC2);
     for (size_t i = 0; i < PAGING_TEST_PAGES; i++) {
-        paging_free_pages(phys_SEC1[i], 1);
-        paging_free_pages(phys_SEC2[i], 1);
+        pmm_free_pages(phys_SEC1[i], 1);
+        pmm_free_pages(phys_SEC2[i], 1);
         kprintf(LOG_INFO "Freed page %zu: SEC1 paddr=%p, SEC2 paddr=%p\n", i, (void*)phys_SEC1[i], (void*)phys_SEC2[i]);
     }
 }

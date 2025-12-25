@@ -4,6 +4,7 @@
 #include <panic.h>
 #include <ansii.h>
 #include <threads/exit.h>
+#include <gdt/gdt.h>
 #include <drivers/serial/serial.h>
 
 #define SCHED_TEST_TASKS 4

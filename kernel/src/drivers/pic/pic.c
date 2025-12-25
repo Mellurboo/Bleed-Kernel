@@ -28,7 +28,7 @@ void pic_init(int master_offset, int slave_offset){
     outb(PIC2_DATA, ICW4_8086);
 
     outb(PIC1_DATA, 0xFC);    // kbd and timer mask
-    outb(PIC2_DATA, 0xFF);    // disable all slave IRQs
+    outb(PIC2_DATA, 0xEF);    // disable all slave IRQs
 }
 
 cpu_context_t *timer_handle(cpu_context_t *r){
@@ -40,12 +40,12 @@ cpu_context_t *timer_handle(cpu_context_t *r){
 }
 
 void irq_handler(uint8_t irq) {
-    PIC_EOI(irq);
     switch (irq) {
         case 0:
             break;
         case 1:
             PS2_Keyboard_Interrupt(irq);
+            PIC_EOI(irq);
             break;
         default:
             kprintf(LOG_WARN "pic sent us an unimplemented req\n");

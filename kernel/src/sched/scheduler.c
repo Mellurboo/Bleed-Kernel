@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <drivers/serial/serial.h>
 #include <ansii.h>
-#include <gdt/gdt.h>
 #include <tss/tss.h>
 
 #include "priv_scheduler.h"
@@ -51,7 +50,7 @@ cpu_context_t *sched_tick(cpu_context_t *context) {
         if (task->state == TASK_READY) {
             current_task = task;
             current_task->state = TASK_RUNNING;
-            tss.rsp0 = (uint64_t)current_task->kernel_stack - KERNEL_STACK_SIZE;
+            tss.rsp0 = (uint64_t)current_task->kernel_stack + KERNEL_STACK_SIZE;
             paging_switch_address_space(current_task->page_map);
 
             return current_task->context;
@@ -60,7 +59,7 @@ cpu_context_t *sched_tick(cpu_context_t *context) {
     } while (task != start);
 
     current_task->state = TASK_RUNNING;
-
+    
     return current_task->context;
 }
 

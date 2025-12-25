@@ -5,7 +5,7 @@ typedef struct {
     uint32_t reserved;
     uint64_t rsp0;
     uint32_t reserved2[23];
-} __attribute__((packed)) TSS;
+} __attribute__((packed)) tss_t;
 
 typedef struct {
     uint16_t limit_low;
@@ -16,8 +16,8 @@ typedef struct {
     uint8_t base_high;
     uint32_t base_high2;
     uint32_t _reserved;
-} __attribute__((packed)) TSSSegment;
+} __attribute__((packed)) tss_segment_t;
 
-extern TSS tss;
+extern tss_t tss;
 
 void tss_init();

@@ -3,11 +3,12 @@
 #include <gdt/gdt.h>
 #include <stddef.h>
 
-TSS tss = {0};
+tss_t tss = {0};
 
+/// @brief Task State Segment Initialiser
 void tss_init(){
-    TSSSegment* tss_segment = &gdt.tss;
-    tss_segment->limit_low = sizeof(TSS)-1;
+    tss_segment_t* tss_segment = &gdt.tss;
+    tss_segment->limit_low = sizeof(tss_t)-1;
     uint64_t tss_ptr = (uint64_t)&tss;
     tss_segment->base_low    = tss_ptr;
     tss_segment->base_middle = tss_ptr>>16;
