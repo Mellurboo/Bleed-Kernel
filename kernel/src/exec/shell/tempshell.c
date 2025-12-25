@@ -97,8 +97,8 @@ static void draw_cursor() {
     tty_cursor_t c = cursor_get_position();
     if (!font) return;
 
-    uint32_t *fb_ptr = (uint32_t *)framebuffer_get_addr();
-    size_t pitch = framebuffer_get_pitch();
+    uint32_t *fb_ptr = (uint32_t *)framebuffer_get_addr(0);
+    size_t pitch = framebuffer_get_pitch(0);
 
     size_t px_base = prev_cursor.x * font->width;
     size_t py_base = prev_cursor.y * font->height + font->height - 1;

@@ -91,5 +91,5 @@ void framebuffer_ansi_char(char c) {
         return;
     }
     
-    framebuffer_put_char(psf_get_current_font(), c, ansi.fg, ansi.bg);
+    framebuffer_put_char(framebuffer_get_addr(0), framebuffer_get_pitch(0), psf_get_current_font(), c, ansi.fg, ansi.bg);
 }

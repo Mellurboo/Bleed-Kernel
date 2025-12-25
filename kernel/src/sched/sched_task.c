@@ -3,6 +3,7 @@
 #include <mm/heap.h>
 #include <string.h>
 #include <mm/paging.h>
+#include <stdio.h>
 
 #include "priv_scheduler.h"
 
@@ -43,16 +44,12 @@ int sched_create_task(uint64_t cr3, uint64_t entry, uint64_t cs, uint64_t ss) {
         ke_panic("Failed to allocate kernel stack");
     uint64_t kernel_stack_top = (uint64_t)task->kernel_stack + KERNEL_STACK_SIZE;
 
-    // --- USER STACK ---
-    uint64_t last_vpage = 0;
     for (uint64_t page = USER_STACK_TOP - USER_STACK_SIZE; page < USER_STACK_TOP; page += PAGE_SIZE) {
         paddr_t paddr = pmm_alloc_pages(1);
         if (!paddr) ke_panic("Failed to allocate user stack page");
 
         paging_map_page(task->page_map, paddr, page, PTE_USER | PTE_WRITABLE);
-        last_vpage = page;
     }
-    uint64_t user_stack_top = last_vpage + PAGE_SIZE; // top of last mapped page
 
     // CPU context on kernel stack
     cpu_context_t *ctx = (cpu_context_t *)(kernel_stack_top - sizeof(cpu_context_t));
@@ -64,7 +61,7 @@ int sched_create_task(uint64_t cr3, uint64_t entry, uint64_t cs, uint64_t ss) {
     ctx->rflags = 0x202;
 
     // Choose stack depending on user/kernel code segment
-    ctx->rsp = (cs & 0x3) ? user_stack_top : kernel_stack_top;
+    ctx->rsp = (cs & 0x3) ? USER_STACK_TOP : kernel_stack_top;
 
     task->context = ctx;
 

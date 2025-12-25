@@ -80,7 +80,14 @@ void kernel_self_test(){
     pit_test_self_test();
     scheduler_test_self_test();
     vfs_test_self_test();
-    framebuffer_clear(0x000000);
+
+    framebuffer_clear(framebuffer_get_addr(0),
+                        framebuffer_get_width(0),
+                        framebuffer_get_height(0),
+                        framebuffer_get_pitch(0),
+                        0x000000);
+                        
+    cursor_set_position(0, 0);
 }
 
 void kmain() {

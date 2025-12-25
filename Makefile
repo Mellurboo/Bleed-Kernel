@@ -5,7 +5,7 @@ CC := cc
 LD := ld
 OBJCOPY := objcopy
 
-MEMSZ = 20M
+MEMSZ = 256M
 
 CFLAGS := -g -O2 -Wall -Wpedantic -Werror -Wextra -std=gnu11 \
           -nostdinc -ffreestanding -fno-stack-protector \

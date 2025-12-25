@@ -10,16 +10,16 @@ typedef struct tty_cursor{
 } tty_cursor_t;
 
 /// @return pointer to framebuffer
-void* framebuffer_get_addr();
+void* framebuffer_get_addr(int idx);
 
 /// @return bytes between 2 scanlines
-uint64_t framebuffer_get_pitch();
+uint64_t framebuffer_get_pitch(int idx);
 
 /// @return framebuffer (x)
-uint64_t framebuffer_get_width();
+uint64_t framebuffer_get_width(int idx);
 
 /// @return framebuffer (y)
-uint64_t framebuffer_get_height();
+uint64_t framebuffer_get_height(int idx);
 
 /// @brief the terminals cursor position
 /// @return (x, y) terminal cursor
@@ -36,7 +36,7 @@ tty_cursor_t cursor_set_position(int x, int y);
 /// @param c character
 /// @param fg foreground colour
 /// @param bg background colour
-void framebuffer_put_char(psf_font_t* font, char c, uint32_t fg, uint32_t bg);
+void framebuffer_put_char(uint32_t *pixels, uint64_t pitch, psf_font_t* font, char c, uint32_t fg, uint32_t bg);
 
 /// @brief recursivly write characters from a string to the framebuffer
 /// @param str target
@@ -48,4 +48,4 @@ void framebuffer_ansi_char(char c);
 
 /// @brief clear the framebuffer
 /// @param color bg colour to clear with
-void framebuffer_clear(uint32_t color);
+void framebuffer_clear(uint32_t *pixels, uint64_t width, uint64_t height, uint64_t pitch, uint32_t colour);

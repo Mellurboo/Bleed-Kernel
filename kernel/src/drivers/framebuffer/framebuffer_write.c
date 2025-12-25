@@ -28,26 +28,21 @@ tty_cursor_t cursor_set_position(int x, int y){
 
 /// @brief clear the top row and shift everything up one
 /// @param background_colour 
-static void framebuffer_scroll(uint32_t background_colour) {
-    psf_font_t *font    = psf_get_current_font();
-    uint32_t *fb        = (uint32_t*)framebuffer_get_addr();
-    uint64_t fb_pitch   = framebuffer_get_pitch();
-    uint64_t fb_height  = framebuffer_get_height();
-
+static void framebuffer_scroll(uint32_t *pixels, uint64_t height, uint64_t pitch, uint32_t colour, psf_font_t *font) {
     size_t row_px = font->height;
-    size_t scroll_px = row_px * fb_pitch;
+    size_t scroll_px = row_px * pitch;
 
-    size_t total_px = fb_pitch * fb_height;
+    size_t total_px = pitch * height;
 
     memmove(
-        fb,
-        fb + scroll_px,
+        pixels,
+        pixels + scroll_px,
         (total_px - scroll_px) * sizeof(uint32_t)
     );
 
-    size_t start = (fb_height - row_px) * fb_pitch;
-    for (size_t i = 0; i < row_px * fb_pitch; i++) {
-        fb[start + i] = background_colour;
+    size_t start = (height - row_px) * pitch;
+    for (size_t i = 0; i < row_px * pitch; i++) {
+        pixels[start + i] = colour;
     }
 }
 
@@ -56,7 +51,7 @@ static void framebuffer_scroll(uint32_t background_colour) {
 /// @param c character
 /// @param fg foreground colour
 /// @param bg background colour
-void framebuffer_put_char(psf_font_t* font, char c, uint32_t fg, uint32_t bg){
+void framebuffer_put_char(uint32_t *pixels, uint64_t pitch, psf_font_t* font, char c, uint32_t fg, uint32_t bg){
     if (!font) return;
 
     tty_cursor_t cursor = cursor_get_position();
@@ -81,9 +76,6 @@ void framebuffer_put_char(psf_font_t* font, char c, uint32_t fg, uint32_t bg){
             const uint8_t *glyph = psf_get_glyph_font(font, (uint16_t)c);
             if (!glyph) return;
 
-            uint32_t *fb_ptr = (uint32_t*)framebuffer_get_addr();
-            size_t pitch = framebuffer_request.response->framebuffers[0]->pitch / 4;
-
             for (uint32_t row = 0; row < font->height; row++){
                 for (uint32_t col = 0; col < font->width; col++){
                     uint8_t byte = glyph[row * font->bytes_per_row + (col >> 3)];
@@ -92,7 +84,7 @@ void framebuffer_put_char(psf_font_t* font, char c, uint32_t fg, uint32_t bg){
 
                     size_t px = cursor.x * font->width + col;
                     size_t py = cursor.y * font->height + row;
-                    fb_ptr[py * pitch + px] = color;
+                    pixels[py * pitch + px] = color;
                 }
             }
 
@@ -112,7 +104,11 @@ void framebuffer_put_char(psf_font_t* font, char c, uint32_t fg, uint32_t bg){
     // i was going to make it so the user could scroll here with 
     // page up and page down but i dont think that is appropriate right now :(
     if (cursor.y >= max_rows) {
-        framebuffer_scroll(bg);
+        framebuffer_scroll((uint32_t*)framebuffer_get_addr(0),
+            framebuffer_get_height(0), 
+            framebuffer_get_pitch(0), 
+            0x000000, 
+            psf_get_current_font());
         cursor.y = max_rows - 1;
     }
 
