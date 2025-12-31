@@ -24,6 +24,7 @@
 #include <console/console.h>
 #include <sched/scheduler.h>
 #include <threads/exit.h>
+#include <syscalls/syscall.h>
 #include <exec/elf_load.h>
 #include <tss/tss.h>
 #include <panic.h>
@@ -107,11 +108,6 @@ void console_init(){
     console_set(tty);
 }
 
-static void test_callback(char c){
-    if (c == '\b') kprintf("\b ");
-    kprintf("%c", c);
-}
-
 void kmain() {
     asm volatile ("cli");
     init_sse();
@@ -133,11 +129,13 @@ void kmain() {
     scheduler_start();
     sched_create_task(read_cr3(), (uint64_t)scheduler_reap, KERNEL_CS, KERNEL_SS);
     kernel_self_test();
-    load_elf_from_initrd("initrd/bin/c.elf");
     asm volatile ("sti");
 
+    load_elf_from_initrd("initrd/bin/c.elf");
+    load_elf_from_initrd("initrd/bin/cpp.elf");
+    load_elf_from_initrd("initrd/bin/rs.elf");
+
     PS2_Keyboard_init();
-    PS2_Keyboard_set_callback(test_callback);
     
     for (;;){}
 

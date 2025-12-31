@@ -3,8 +3,7 @@
 #include <sched/scheduler.h>
 #include <ansii.h>
 #include <threads/exit.h>
-
-#include "syscall.h"
+#include <syscalls/syscall.h>
 
 #define SYSCALL(idx, func) [idx] = (SyscallHandler)func
 
@@ -13,19 +12,16 @@ typedef uint64_t (*SyscallHandler)(uint64_t, uint64_t, uint64_t, uint64_t, uint6
 enum {
     SYS_READ,
     SYS_WRITE,
-    SYS_OPEN,
-    SYS_CLOSE,
-    SYS_MKDIR,
-    SYS_RMDIR,
     SYS_EXIT,
-    SYS_PRINT
+    SYS_CLEAR,
 };
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 SyscallHandler syscall_handlers[] = {
+    SYSCALL(SYS_WRITE, sys_write),
     SYSCALL(SYS_EXIT, sys_exit),
-    SYSCALL(SYS_PRINT, sys_print)
+    SYSCALL(SYS_CLEAR, sys_clear)
 };
 #pragma GCC diagnostic pop
 
