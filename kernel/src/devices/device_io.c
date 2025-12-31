@@ -1,15 +1,17 @@
 #include <devices/type/tty_device.h>
+#include <sched/scheduler.h>
 
 int tty_read(device_t *dev, void *buf, size_t len){
     tty_t *tty = dev->priv;
     size_t i = 0;
-
+    
     while (i < len) {
-        if (tty->in_head == tty->in_tail)
-            break;
+        while (tty->in_head == tty->in_tail) {
+            asm volatile("hlt");
+        }
 
         char c = tty->inbuffer[tty->in_tail++ % TTY_BUFFER_SZ];
-        ((char *)buf)[i++] = c;
+        ((char*)buf)[i++] = c;
 
         if ((tty->flags & TTY_CANNONICAL) && c == '\n')
             break;

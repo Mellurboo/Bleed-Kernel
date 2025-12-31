@@ -19,6 +19,7 @@ enum {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 SyscallHandler syscall_handlers[] = {
+    SYSCALL(SYS_READ, sys_read),
     SYSCALL(SYS_WRITE, sys_write),
     SYSCALL(SYS_EXIT, sys_exit),
     SYSCALL(SYS_CLEAR, sys_clear)

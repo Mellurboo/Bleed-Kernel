@@ -108,6 +108,10 @@ void console_init(){
     console_set(tty);
 }
 
+void kbcallback(char c){
+    tty_process_input(&tty0, c);
+}
+
 void kmain() {
     asm volatile ("cli");
     init_sse();
@@ -132,10 +136,11 @@ void kmain() {
     asm volatile ("sti");
 
     load_elf_from_initrd("initrd/bin/c.elf");
-    load_elf_from_initrd("initrd/bin/cpp.elf");
-    load_elf_from_initrd("initrd/bin/rs.elf");
+    //load_elf_from_initrd("initrd/bin/cpp.elf");
+    //load_elf_from_initrd("initrd/bin/rs.elf");
 
     PS2_Keyboard_init();
+    PS2_Keyboard_set_callback(kbcallback);
     
     for (;;){}
 
