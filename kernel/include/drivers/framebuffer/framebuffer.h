@@ -1,13 +1,19 @@
 #pragma once
 
 #include <fonts/psf.h>
+#include <drivers/framebuffer/framebuffer_console.h>
 
-extern uint32_t global_bg_color;
+typedef struct {
+    uint32_t fg;
+    uint32_t bg;
+    int esc;
+    int csi;
+    int params[16];
+    int param_count;
+    int substate;
+    int subparams[4];
+} ansii_state_t;
 
-typedef struct tty_cursor{
-    uint64_t x;
-    uint64_t y;  
-} tty_cursor_t;
 
 /// @return pointer to framebuffer
 void* framebuffer_get_addr(int idx);
@@ -21,30 +27,24 @@ uint64_t framebuffer_get_width(int idx);
 /// @return framebuffer (y)
 uint64_t framebuffer_get_height(int idx);
 
-/// @brief the terminals cursor position
-/// @return (x, y) terminal cursor
-tty_cursor_t cursor_get_position();
-
-/// @brief set the cursor position
-/// @param x axis
-/// @param y axis
-/// @return new cursor
-tty_cursor_t cursor_set_position(int x, int y);
-
 /// @brief write a character to the framebuffer
 /// @param font text font
 /// @param c character
 /// @param fg foreground colour
 /// @param bg background colour
-void framebuffer_put_char(uint32_t *pixels, uint64_t pitch, psf_font_t* font, char c, uint32_t fg, uint32_t bg);
+void framebuffer_put_char(fb_console_t *fb, char c);
 
 /// @brief recursivly write characters from a string to the framebuffer
 /// @param str target
-void framebuffer_write_string(const char* str);
+void framebuffer_write_string(
+    fb_console_t *fb,
+    ansii_state_t *ansi,
+    const char *str
+);
 
 /// @brief evaluate c and track its ansii state
 /// @param c target
-void framebuffer_ansi_char(char c);
+void framebuffer_ansi_char(fb_console_t *fb, ansii_state_t *st, char c);
 
 /// @brief clear the framebuffer
 /// @param color bg colour to clear with

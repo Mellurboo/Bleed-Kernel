@@ -4,7 +4,7 @@
 #include <drivers/serial/serial.h>
 #include <ansii.h>
 
-static_assert(ERROR_CODES_COUNT == 9, "Update Error Codes");
+static_assert(ERROR_CODES_COUNT == 11, "Update Error Codes");
 static const char* error_code_map[] = {
     [OUT_OF_MEMORY] = "Out Of Memory",
     [OUT_OF_BOUNDS] = "Out Of Bounds",
@@ -16,6 +16,8 @@ static const char* error_code_map[] = {
     [TAR_EXTRACT_FAILURE]   = "Failed to Extract .tar file",
 
     [INVALID_MAGIC] = "Invalid Magic value",
+    [DEV_EXISTS] = "Device with matching name already registered",
+    [MAX_DEVICES_REACHED] = "There are too many devices",
 
     [SERIAL_NOT_AVAILABLE] = "Serial Output is not available on this machine",
 };

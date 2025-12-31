@@ -1,49 +1,27 @@
 #include <stdint.h>
 #include <vendor/limine_bootloader/limine.h>
 #include <drivers/framebuffer/framebuffer.h>
+#include <drivers/framebuffer/framebuffer_console.h>
 #include <string.h>
 
 extern volatile struct limine_framebuffer_request framebuffer_request;
 
-tty_cursor_t tty_cursor = {
-    .x = 0,
-    .y = 0
-};
-
-/// @brief the terminals cursor position
-/// @return (x, y) terminal cursor
-tty_cursor_t cursor_get_position() {
-    return tty_cursor;
-}
-
-/// @brief set the tty cursor position
-/// @param x new x
-/// @param y new y
-/// @return new cursor position
-tty_cursor_t cursor_set_position(int x, int y){
-    tty_cursor.x = x; 
-    tty_cursor.y = y; 
-    return tty_cursor;
-}
-
 /// @brief clear the top row and shift everything up one
 /// @param background_colour 
-static void framebuffer_scroll(uint32_t *pixels, uint64_t height, uint64_t pitch, uint32_t colour, psf_font_t *font) {
-    size_t row_px = font->height;
-    size_t scroll_px = row_px * pitch;
-
-    size_t total_px = pitch * height;
+static void framebuffer_scroll(fb_console_t *fb) {
+    size_t row_px = fb->font->height;
+    size_t scroll_px = row_px * fb->pitch;
+    size_t total_px = fb->pitch * fb->height;
 
     memmove(
-        pixels,
-        pixels + scroll_px,
+        fb->pixels,
+        fb->pixels + scroll_px,
         (total_px - scroll_px) * sizeof(uint32_t)
     );
 
-    size_t start = (height - row_px) * pitch;
-    for (size_t i = 0; i < row_px * pitch; i++) {
-        pixels[start + i] = colour;
-    }
+    size_t start = (fb->height - row_px) * fb->pitch;
+    for (size_t i = 0; i < row_px * fb->pitch; i++)
+        fb->pixels[start + i] = fb->bg;
 }
 
 /// @brief write a character to the framebuffer
@@ -51,75 +29,75 @@ static void framebuffer_scroll(uint32_t *pixels, uint64_t height, uint64_t pitch
 /// @param c character
 /// @param fg foreground colour
 /// @param bg background colour
-void framebuffer_put_char(uint32_t *pixels, uint64_t pitch, psf_font_t* font, char c, uint32_t fg, uint32_t bg){
-    if (!font) return;
-
-    tty_cursor_t cursor = cursor_get_position();
+void framebuffer_put_char(fb_console_t *fb, char c) {
+    if (!fb || !fb->font)
+        return;
 
     switch (c) {
-        case '\n':
-            cursor.x = 0;
-            cursor.y++;
-            break;
-        case '\r':
-            cursor.x = 0;
-            break;
-        case '\b':
-            if (cursor.x > 0) cursor.x--;
-            break;
-        case '\t':
-            cursor.x = (cursor.x + 8) & ~7;
-            break;
-        default:
-            if ((uint8_t)c < 0x20) return;
+    case '\n':
+        fb->cursor_x = 0;
+        fb->cursor_y++;
+        break;
 
-            const uint8_t *glyph = psf_get_glyph_font(font, (uint16_t)c);
-            if (!glyph) return;
+    case '\r':
+        fb->cursor_x = 0;
+        break;
 
-            for (uint32_t row = 0; row < font->height; row++){
-                for (uint32_t col = 0; col < font->width; col++){
-                    uint8_t byte = glyph[row * font->bytes_per_row + (col >> 3)];
-                    uint8_t mask = 0x80 >> (col & 7);
-                    uint32_t color = (byte & mask) ? fg : bg;
+    case '\b':
+        if (fb->cursor_x > 0)
+            fb->cursor_x--;
+        break;
 
-                    size_t px = cursor.x * font->width + col;
-                    size_t py = cursor.y * font->height + row;
-                    pixels[py * pitch + px] = color;
-                }
+    case '\t':
+        fb->cursor_x = (fb->cursor_x + 8) & ~7;
+        break;
+
+    default: {
+        if ((uint8_t)c < 0x20)
+            return;
+
+        const uint8_t *glyph =
+            psf_get_glyph_font(fb->font, (uint16_t)c);
+        if (!glyph)
+            return;
+
+        for (uint32_t row = 0; row < fb->font->height; row++) {
+            for (uint32_t col = 0; col < fb->font->width; col++) {
+                uint8_t byte =
+                    glyph[row * fb->font->bytes_per_row + (col >> 3)];
+                uint8_t mask = 0x80 >> (col & 7);
+
+                size_t px = fb->cursor_x * fb->font->width + col;
+                size_t py = fb->cursor_y * fb->font->height + row;
+
+                fb->pixels[py * fb->pitch + px] =
+                    (byte & mask) ? fb->fg : fb->bg;
             }
+        }
 
-            cursor.x++;
-            break;
+        fb->cursor_x++;
+        break;
+    }
     }
 
-    // Wrap
-    size_t max_cols = framebuffer_request.response->framebuffers[0]->width / font->width;
-    size_t max_rows = framebuffer_request.response->framebuffers[0]->height / font->height;
+    size_t max_cols = fb->width / fb->font->width;
+    size_t max_rows = fb->height / fb->font->height;
 
-    if (cursor.x >= max_cols) {
-        cursor.x = 0;
-        cursor.y++;
+    if (fb->cursor_x >= max_cols) {
+        fb->cursor_x = 0;
+        fb->cursor_y++;
     }
 
-    // i was going to make it so the user could scroll here with 
-    // page up and page down but i dont think that is appropriate right now :(
-    if (cursor.y >= max_rows) {
-        framebuffer_scroll((uint32_t*)framebuffer_get_addr(0),
-            framebuffer_get_height(0), 
-            framebuffer_get_pitch(0), 
-            0x000000, 
-            psf_get_current_font());
-        cursor.y = max_rows - 1;
+    if (fb->cursor_y >= max_rows) {
+        framebuffer_scroll(fb);
+        fb->cursor_y = max_rows - 1;
     }
-
-    // Update global cursor
-    tty_cursor = cursor;
 }
 
 /// @brief recursivly write characters from a string to the framebuffer
 /// @param str target
-void framebuffer_write_string(const char* str) {
+void framebuffer_write_string(fb_console_t *fb, ansii_state_t *ansi, const char *str) {
     while (*str) {
-        framebuffer_ansi_char(*str++);
+        framebuffer_ansi_char(fb, ansi, *str++);
     }
 }

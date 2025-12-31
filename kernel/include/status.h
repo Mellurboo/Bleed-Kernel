@@ -13,6 +13,9 @@ typedef enum error_code {
 
     INVALID_MAGIC,
 
+    DEV_EXISTS,
+    MAX_DEVICES_REACHED,
+
     ERROR_CODES_COUNT,
 } error_code_t;
 

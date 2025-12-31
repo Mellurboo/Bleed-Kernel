@@ -4,3 +4,4 @@ bin/*
 edk2-ovmf
 limine/
 *.tar
+qemu.log

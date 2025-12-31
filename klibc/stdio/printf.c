@@ -14,12 +14,14 @@
 #include <lib/nanoprintf.h>
 #include <mm/heap.h>
 #include <drivers/serial/serial.h>
+#include <console/console.h>
+#include <devices/type/tty_device.h>
 
 /// @brief formatted print to tty
 /// @param s string
-void kprintf(const char *fmt, ...){
-    size_t size = 256;
+void kprintf(const char *fmt, ...) {
     char *buf = NULL;
+    size_t size = 256;
 
     while (1) {
         buf = kmalloc(size);
@@ -38,11 +40,21 @@ void kprintf(const char *fmt, ...){
         if ((size_t)written < size) {
             break;
         }
+
         kfree(buf, size);
-        size = size * 2;
+        size *= 2;
     }
 
-    framebuffer_write_string(buf);
+    tty_t *tty = NULL;
+    device_t *dev = device_get_by_name("tty0");
+    if (dev)
+        tty = dev->priv;
+
+    if (tty && tty->backend) {
+        fb_console_t *fb = &((tty_fb_backend_t *)tty->backend)->fb;
+        ansii_state_t *ansi = &((tty_fb_backend_t *)tty->backend)->ansi;
+        framebuffer_write_string(fb, ansi, buf);
+    }
+
     serial_printf("%s", buf);
-    kfree(buf, size);
 }

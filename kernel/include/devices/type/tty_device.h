@@ -1,0 +1,43 @@
+#pragma once
+#include <stdint.h>
+#include <devices/devices.h>
+#include <devices/type/tty_device.h>
+#include <drivers/framebuffer/framebuffer_console.h>
+#include <drivers/framebuffer/framebuffer.h>
+#include <stddef.h>
+
+#define TTY_BUFFER_SZ   1024
+#define TTY_ECHO        (1 << 1)
+#define TTY_CANNONICAL  (1 << 2)
+
+typedef struct tty tty_t;
+
+typedef struct {
+    fb_console_t fb;
+    ansii_state_t ansi;
+} tty_fb_backend_t;
+
+struct tty_ops {
+    void (*putchar)(tty_t *, char c);
+    void (*write)(tty_t *, const char *s);
+    void (*clear)(tty_t *);
+};
+
+typedef struct tty{
+    device_t device;
+
+    char inbuffer[TTY_BUFFER_SZ];
+    char outbuffer[TTY_BUFFER_SZ];
+
+    size_t in_head, in_tail;
+    size_t out_head, out_tail;
+
+    uint64_t *framebuffer_address;
+
+    uint32_t flags;
+    struct tty_ops *ops;    // backend
+    void *backend;
+} tty_t;
+
+void tty_process_input(tty_t *tty, char c);
+void tty_init_framebuffer();
