@@ -30,8 +30,11 @@ void tty_process_input(tty_t *tty, char c) {
     if (c == '\b') {
         if (tty->in_head != tty->in_tail) {
             tty->in_head--;
-            if (tty->flags & TTY_ECHO)
-                tty->ops->putchar(tty, '\b');
+                if (tty->flags & TTY_ECHO) {
+                    tty->ops->putchar(tty, '\b');
+                    tty->ops->putchar(tty, ' ');
+                    tty->ops->putchar(tty, '\b');
+                }
         }
         return;
     }
