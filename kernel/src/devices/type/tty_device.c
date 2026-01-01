@@ -74,9 +74,9 @@ void tty_input_char(tty_t *tty, char c) {
         tty->ops->putchar(tty, c);
 }
 
-void tty_init_framebuffer(tty_t *tty, tty_fb_backend_t *backend, const char *name, fb_console_t *fb) {
+void tty_init_framebuffer(tty_t *tty, tty_fb_backend_t *backend, const char *name, fb_console_t *fb, uint32_t flags) {
     backend->fb   = *fb;
     backend->ansi = (ansii_state_t){0};
 
-    tty_init(tty, name, &fb_ops, backend, TTY_ECHO | TTY_CANNONICAL);
+    tty_init(tty, name, &fb_ops, backend, flags);
 }

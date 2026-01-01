@@ -40,4 +40,4 @@ typedef struct tty{
 } tty_t;
 
 void tty_process_input(tty_t *tty, char c);
-void tty_init_framebuffer();
+void tty_init_framebuffer(tty_t *tty, tty_fb_backend_t *backend, const char *name, fb_console_t *fb, uint32_t flags);

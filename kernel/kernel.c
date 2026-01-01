@@ -68,7 +68,7 @@ void splash(){
     kprintf("%s\n", splash_buffer);
 }
 
-void load_elf_from_initrd(const char *path){
+task_t *load_elf_from_initrd(const char *path){
     INode_t *file = NULL;
     path_t filepath = vfs_path_from_abs(path);
 
@@ -77,7 +77,7 @@ void load_elf_from_initrd(const char *path){
 
     uintptr_t entry;
     if (file != NULL) elf_load(file, cr3, &entry);
-    sched_create_task(cr3, entry, USER_CS, USER_SS);
+    return sched_create_task(cr3, entry, USER_CS, USER_SS);
 }
 
 void kernel_self_test(){
@@ -101,15 +101,11 @@ void console_init(){
         .bg = 0x000000,
     };
 
-    tty_init_framebuffer(&tty0, &tty0_backend, "tty0", &fb);
+    tty_init_framebuffer(&tty0, &tty0_backend, "tty0", &fb, TTY_ECHO | TTY_CANNONICAL);
     device_register(&tty0.device);
 
     device_t *tty = device_get_by_name("tty0");
     console_set(tty);
-}
-
-void kbcallback(char c){
-    tty_process_input(&tty0, c);
 }
 
 void kmain() {
@@ -135,15 +131,10 @@ void kmain() {
     kernel_self_test();
     asm volatile ("sti");
 
-    load_elf_from_initrd("initrd/bin/c.elf");
-    //load_elf_from_initrd("initrd/bin/cpp.elf");
-    //load_elf_from_initrd("initrd/bin/rs.elf");
+    PS2_Keyboard_init(tty0);
+    load_elf_from_initrd("initrd/bin/verdict");
 
-    PS2_Keyboard_init();
-    PS2_Keyboard_set_callback(kbcallback);
-    
     for (;;){}
-
     ke_panic("Kernel Main Thread Died");
     return;
 }

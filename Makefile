@@ -54,7 +54,7 @@ edk2-ovmf:
 
 .PHONY: initrd
 initrd:
-	tar -cf initrd/initrd.tar initrd/etc/splash.txt initrd/fonts/ttyfont.psf initrd/bin/c.elf initrd/bin/cpp.elf initrd/bin/rs.elf
+	tar -cf initrd/initrd.tar initrd/etc/splash.txt initrd/fonts/ttyfont.psf initrd/bin/verdict
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root

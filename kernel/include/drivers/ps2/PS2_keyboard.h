@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <devices/type/tty_device.h>
 
 typedef void (*keyboard_callback_t)(char c);
 
@@ -12,7 +13,8 @@ void PS2_Keyboard_Interrupt(uint8_t irq);
 /// @param cb 
 void PS2_Keyboard_set_callback(keyboard_callback_t cb);
 
-/// @brief flush the PS2 keyboard and prepare for execution
+void PS2_Keyboard_callback(char c);
+
 void PS2_Keyboard_init();
 
 static const char keymap[128] = {

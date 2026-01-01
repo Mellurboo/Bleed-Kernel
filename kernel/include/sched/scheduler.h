@@ -42,7 +42,7 @@ typedef struct task {
 
 typedef void (*task_itteration_fn)(task_t *task, void *userdata);
 
-int sched_create_task(uint64_t cr3, uint64_t entry, uint64_t cs, uint64_t ss);
+task_t *sched_create_task(uint64_t cr3, uint64_t entry, uint64_t cs, uint64_t ss);
 extern void sched_bootstrap(void *rsp);
 extern cpu_context_t *sched_tick(cpu_context_t *context);
 void scheduler_reap(void);

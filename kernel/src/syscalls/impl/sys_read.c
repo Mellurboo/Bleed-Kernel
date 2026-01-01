@@ -8,8 +8,17 @@ uint64_t sys_read(uint64_t fd, uint64_t user_buf, uint64_t len){
         return 0;
 
     device_t *dev = NULL;
-    if (fd == 1) dev = device_get_by_name("tty0");
-    if (!dev || !dev->read) return -1;
+
+    switch (fd) {
+    case 0:
+        dev = device_get_by_name("tty0");
+        break;
+    default:
+        return (uint64_t)-1;
+    }
+
+    if (!dev || !dev->read)
+        return (uint64_t)-1;
 
     return dev->read(dev, (void *)user_buf, len);
 }

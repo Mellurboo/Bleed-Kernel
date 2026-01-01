@@ -1,9 +1,11 @@
 #include <drivers/ps2/PS2_keyboard.h>
 #include <drivers/pic/pic.h>
+#include <devices/type/tty_device.h>
 #include <cpu/io.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <console/console.h>
 
 #define KBD_PORT 0x60
 
@@ -21,11 +23,6 @@ static inline void PS2_Flush(void){
     while (inb(0x64) & 0x01){
         (void)inb(0x60);
     }
-}
-
-/// @brief flush the PS2 keyboard and prepare for execution
-void PS2_Keyboard_init(){
-    PS2_Flush();
 }
 
 /// @brief push a char onto the keyboard buffer stack
@@ -87,4 +84,14 @@ int PS2_Keyboard_get_char(void) {
 /// @param cb 
 void PS2_Keyboard_set_callback(keyboard_callback_t cb) {
     kb_callback = cb;
+}
+
+void PS2_Keyboard_callback(char c){
+    tty_process_input((tty_t*)console_get_active_console()->priv, c);
+}
+
+/// @brief flush the PS2 keyboard and prepare for execution
+void PS2_Keyboard_init(){
+    PS2_Flush();
+    PS2_Keyboard_set_callback(PS2_Keyboard_callback);
 }

@@ -1,23 +1,37 @@
 #include <devices/type/tty_device.h>
 #include <sched/scheduler.h>
 
-int tty_read(device_t *dev, void *buf, size_t len){
+long tty_read(device_t *dev, void *buf, size_t len) {
     tty_t *tty = dev->priv;
-    size_t i = 0;
-    
-    while (i < len) {
-        while (tty->in_head == tty->in_tail) {
-            asm volatile("hlt");
+
+    if (tty->in_head == tty->in_tail)
+        return 0;
+
+    if (tty->flags & TTY_CANNONICAL) {
+        size_t i = tty->in_tail;
+        int found = 0;
+
+        while (i != tty->in_head) {
+            if (tty->inbuffer[i % TTY_BUFFER_SZ] == '\n') {
+                found = 1;
+                break;
+            }
+            i++;
         }
 
-        char c = tty->inbuffer[tty->in_tail++ % TTY_BUFFER_SZ];
-        ((char*)buf)[i++] = c;
+        if (!found)
+            return 0;
+    }
 
+    size_t count = 0;
+    while (count < len && tty->in_tail != tty->in_head) {
+        char c = tty->inbuffer[tty->in_tail++ % TTY_BUFFER_SZ];
+        ((char *)buf)[count++] = c;
         if ((tty->flags & TTY_CANNONICAL) && c == '\n')
             break;
     }
 
-    return i;
+    return count;
 }
 
 int tty_write(device_t *dev, const void *buf, size_t len) {

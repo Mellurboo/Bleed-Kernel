@@ -7,7 +7,7 @@
 
 typedef struct device{
     const char *name;
-    int (*read)(struct device *, void *buffer, size_t length);
+    long (*read)(struct device *, void *buffer, size_t length);
     int (*write)(struct device *, const void *buffer, size_t length);
     int (*ioctl)(struct device *, unsigned long request, void *argument);
     void *priv;
