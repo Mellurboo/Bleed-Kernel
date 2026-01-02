@@ -2,6 +2,7 @@
 #include <vendor/limine_bootloader/limine.h>
 #include <drivers/framebuffer/framebuffer.h>
 #include <drivers/framebuffer/framebuffer_console.h>
+#include <panic.h>
 #include <string.h>
 
 extern volatile struct limine_framebuffer_request framebuffer_request;
@@ -70,15 +71,16 @@ void framebuffer_put_char(fb_console_t *fb, char c) {
                 size_t px = fb->cursor_x * fb->font->width + col;
                 size_t py = fb->cursor_y * fb->font->height + row;
 
-                fb->pixels[py * fb->pitch + px] =
-                    (byte & mask) ? fb->fg : fb->bg;
+                if (py < fb->height && px < fb->width){
+                    fb->pixels[py * fb->pitch + px] = (byte & mask) ? fb->fg : fb->bg;
+                }
             }
         }
 
         fb->cursor_x++;
         break;
     }
-    }
+}
 
     size_t max_cols = fb->width / fb->font->width;
     size_t max_rows = fb->height / fb->font->height;
