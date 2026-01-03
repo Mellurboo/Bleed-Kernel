@@ -24,6 +24,7 @@
 #include <console/console.h>
 #include <sched/scheduler.h>
 #include <threads/exit.h>
+#include <cpu/stack_trace.h>
 #include <syscalls/syscall.h>
 #include <exec/elf_load.h>
 #include <tss/tss.h>
@@ -118,6 +119,7 @@ void kmain() {
     vfs_mount_root();
     initrd_load();
     psf_init("initrd/fonts/ttyfont.psf");
+    stack_trace_load_symbols("initrd/etc/kernel.sym");
     console_init();
 
     gdt_init();

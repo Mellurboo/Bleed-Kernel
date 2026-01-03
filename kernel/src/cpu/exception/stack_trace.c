@@ -2,6 +2,67 @@
 #include <stdint.h>
 #include <ansii.h>
 #include <drivers/serial/serial.h>
+#include <mm/heap.h>
+#include <fs/vfs.h>
+
+struct ksym{
+    uint64_t addr;
+    uint32_t name_off;
+};
+
+struct ksymtab{
+    size_t count;
+    struct ksym *syms;
+    const char *strtab;
+};
+
+static struct ksymtab kernel_symbols;
+
+int stack_trace_load_symbols(const char *path){
+    INode_t *file = NULL;
+    path_t filepath = vfs_path_from_abs(path);
+    vfs_lookup(&filepath, &file);
+
+    if (!file)
+        return -1;
+    
+    void *buf = kmalloc(vfs_filesize(file));
+    if (!buf)
+        return -1;
+
+    if (inode_read(file, buf, vfs_filesize(file), 0) != (long)vfs_filesize(file))
+        return -1;
+    
+    uint8_t *p = buf;
+    kernel_symbols.count = *(size_t*)p;
+    p += sizeof(size_t);
+
+    kernel_symbols.syms = (struct ksym *)p;
+    p += sizeof(struct ksym) * kernel_symbols.count;
+
+    kernel_symbols.strtab = (const char *)p;
+
+    return 0;
+}
+
+const char *stack_trace_symbol_lookup(uint64_t address, uint64_t *sym_addr_out){
+    const char *name = NULL;
+    uint64_t c = 0;
+
+    for (size_t i = 0; i < kernel_symbols.count; i++){
+        uint64_t saddr = kernel_symbols.syms[i].addr;
+
+        if (address >= saddr && saddr >= c){
+            c = saddr;
+            name = kernel_symbols.strtab + kernel_symbols.syms[i].name_off;
+        }
+    }
+
+    if (sym_addr_out)
+        *sym_addr_out = c;
+
+    return name;
+}
 
 void stack_trace_print(uint64_t *rbp) {
     kprintf("\n%sStack trace:%s\n", ORANGE_FG, RESET);
@@ -11,9 +72,21 @@ void stack_trace_print(uint64_t *rbp) {
 
         uint64_t rip = rbp[1];
         if (!rip) break;
+        uint64_t sym_addr = 0;
+        const char *name = stack_trace_symbol_lookup(rip, &sym_addr);
 
-        kprintf("  %s0x%s%p\n", GRAY_FG, RESET, (void*)rip);
+        if (name) {
+            kprintf("  %s0x%s%p %s<%s+0x%llu>%s\n",
+                GRAY_FG, RESET, (void *)rip,
+                ORANGE_FG, name,
+                rip - sym_addr,
+                RESET);
+        } else {
+            kprintf("  %s0x%s%p %s<??:?>%s\n",
+                GRAY_FG, RESET, (void *)rip,
+                ORANGE_FG, RESET);
+        }
 
-        rbp = (uint64_t*)rbp[0];
+        rbp = (uint64_t *)rbp[0];
     }
 }

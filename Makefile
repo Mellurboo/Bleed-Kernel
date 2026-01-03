@@ -1,9 +1,13 @@
 IMAGE_NAME := bleed-kernel
 OBJDIR := bin/obj
 KERNEL_BIN := bin/bleed-kernel
+
 CC := cc
 LD := ld
 OBJCOPY := objcopy
+
+SYM_TOOL := tools/mksymtab
+KERNEL_SYM := initrd/etc/kernel.sym
 
 MEMSZ = 256M
 
@@ -44,6 +48,15 @@ $(KERNEL_BIN): $(OBJ)
 	@mkdir -p $(dir $@)
 	$(LD) $(LDFLAGS) $(OBJ) -o $@
 
+
+$(SYM_TOOL): tools/mksymtab.c
+	$(CC) -O2 tools/mksymtab.c -o $(SYM_TOOL)
+
+$(KERNEL_SYM): $(KERNEL_BIN) $(SYM_TOOL)
+	@mkdir -p $(dir $@)
+	nm -n --defined-only $(KERNEL_BIN) > bin/kernel.sym.txt
+	$(SYM_TOOL) bin/kernel.sym.txt $@
+
 limine/limine:
 	rm -rf limine
 	git clone https://codeberg.org/Limine/Limine.git limine --branch=v10.x-binary --depth=1
@@ -53,8 +66,8 @@ edk2-ovmf:
 	curl -L https://github.com/osdev0/edk2-ovmf-nightly/releases/latest/download/edk2-ovmf.tar.gz | gunzip | tar -xf -
 
 .PHONY: initrd
-initrd:
-	tar -cf initrd/initrd.tar initrd/etc/splash.txt initrd/fonts/ttyfont.psf initrd/bin/verdict
+initrd: $(KERNEL_SYM)
+	tar -cf initrd/initrd.tar initrd/etc/splash.txt initrd/fonts/ttyfont.psf initrd/bin/verdict initrd/etc/kernel.sym
 
 $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 	rm -rf iso_root
@@ -94,6 +107,8 @@ run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 .PHONY: clean
 clean:
 	rm -rf bin $(IMAGE_NAME).iso iso_root edk2-ovmf
+	rm -f bin/kernel.sym.txt initrd/etc/kernel.sym
+	rm -f tools/mksymtab
 	find kernel klibc -name '*.o' -delete
 	find kernel klibc -name '*.d' -delete
 	find initrd -name '*.tar' -delete

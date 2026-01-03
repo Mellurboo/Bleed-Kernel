@@ -59,6 +59,9 @@ extern void ke_exception_handler(void *frame){
     uint64_t cs     = f->cs;
     uint64_t rflags = f->rflags;
 
+    uint64_t sym_addr;
+    const char *name = stack_trace_symbol_lookup(rip, &sym_addr);
+
     serial_write("Kernel Panic!\n");
     serial_write_hex(vector);
     serial_write("\n");
@@ -73,8 +76,16 @@ extern void ke_exception_handler(void *frame){
     kprintf(ORANGE_FG " (CPU Raised) EXCEPTION: %s\n" RESET, exception_name(vector));
     kprintf(GREEN_FG " VECTOR: %llu   ERROR: 0x%p\n", vector, (void *)err);
 
-    kprintf("\n" ORANGE_FG " CPU STATE:" RESET "\n");
-    kprintf(" RIP: " GREEN_FG "0x%p" RESET "   CS: 0x%p   RFLAGS: 0x%p\n", (void *)rip, (void*)cs, (void*)rflags);
+    kprintf("\n" ORANGE_FG " CPU STATE:" RESET "\n");   // todo: i didnt know you could litterally do this to use colour codes, ill change this across the rest of this file later
+    if (name) {
+        kprintf(" RIP: " GREEN_FG "0x%p" RESET "   CS: 0x%p   RFLAGS: 0x%p\n",
+                (void*)rip, (void*)cs, (void*)rflags);
+        kprintf("      " ORANGE_FG "<%s+0x%llu>%s\n", name, rip - sym_addr, RESET);
+    } else {
+        kprintf(" RIP: " GREEN_FG "0x%p" RESET "   CS: 0x%p   RFLAGS: 0x%p\n",
+                (void*)rip, (void*)cs, (void*)rflags);
+    }
+
 
     kprintf("\n" ORANGE_FG " Registers:" RESET "\n");
     kprintf(" RAX: %s0x%p%s\t  RBX: %s0x%p%s\t  RCX: %s0x%p%s\t  RDX: %s0x%p%s\t\n",

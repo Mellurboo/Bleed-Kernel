@@ -155,7 +155,7 @@ paddr_t pmm_alloc_pages(size_t page_count){
 void pmm_free_pages(paddr_t paddr, size_t page_count){
     for (bitmap_entry_t* entry = bitmap_head; entry != NULL; entry = entry->next_entry){
         uintptr_t entry_start = ((paddr_t)entry) - hhdm_request.response->offset;
-        uintptr_t entry_end = entry_start + entry->capacity * PAGE_SIZE;
+        uintptr_t entry_end = entry_start + entry->available_pages;
 
         if ((uintptr_t)paddr >= entry_start && (uintptr_t)paddr < entry_end){
             size_t start = ((uintptr_t)paddr - entry_start) / PAGE_SIZE;
