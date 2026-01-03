@@ -5,3 +5,6 @@ edk2-ovmf
 limine/
 *.tar
 qemu.log
+
+tools/mksymtab
+initrd/etc/kernel.sym
