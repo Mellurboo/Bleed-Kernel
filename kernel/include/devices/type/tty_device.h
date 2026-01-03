@@ -4,6 +4,7 @@
 #include <devices/type/tty_device.h>
 #include <drivers/framebuffer/framebuffer_console.h>
 #include <drivers/framebuffer/framebuffer.h>
+#include <mm/spinlock.h>
 #include <stddef.h>
 
 #define TTY_BUFFER_SZ   1024
@@ -15,6 +16,7 @@ typedef struct tty tty_t;
 typedef struct {
     fb_console_t fb;
     ansii_state_t ansi;
+    spinlock_t fb_lock;
 } tty_fb_backend_t;
 
 struct tty_ops {

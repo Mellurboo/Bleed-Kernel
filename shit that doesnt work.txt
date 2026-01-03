@@ -1,3 +1,0 @@
-- the PMM is fucked
-- theres a fault on the stack in the user programs when you type too much soemthing liek that
-- devices are stupid make a devfs

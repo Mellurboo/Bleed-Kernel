@@ -16,6 +16,7 @@
 #include <drivers/serial/serial.h>
 #include <console/console.h>
 #include <devices/type/tty_device.h>
+#include <mm/spinlock.h>
 
 /// @brief formatted print to tty
 /// @param s string
@@ -53,7 +54,8 @@ void kprintf(const char *fmt, ...) {
     if (tty && tty->backend) {
         fb_console_t *fb = &((tty_fb_backend_t *)tty->backend)->fb;
         ansii_state_t *ansi = &((tty_fb_backend_t *)tty->backend)->ansi;
-        framebuffer_write_string(fb, ansi, buf);
+        spinlock_t framebuffer_lock = ((tty_fb_backend_t *)tty->backend)->fb_lock;
+        framebuffer_write_string(fb, ansi, buf, &framebuffer_lock);
     }
 
     serial_printf("%s", buf);

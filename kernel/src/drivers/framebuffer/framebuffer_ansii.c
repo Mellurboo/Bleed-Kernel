@@ -5,7 +5,7 @@
 
 /// @brief evaluate c and track its ansii state
 /// @param c target
-void framebuffer_ansi_char(fb_console_t *fb, ansii_state_t *st, char c) {
+void framebuffer_ansi_char(fb_console_t *fb, spinlock_t *framebuffer_lock, ansii_state_t *st, char c) {
     if (!fb || !st) return;
 
     if (st->esc) {
@@ -70,5 +70,9 @@ void framebuffer_ansi_char(fb_console_t *fb, ansii_state_t *st, char c) {
         return;
     }
 
+    asm volatile("cli");
+    spinlock_acquire(framebuffer_lock);
     framebuffer_put_char(fb, c);
+    spinlock_release(framebuffer_lock);
+    asm volatile("sti");
 }

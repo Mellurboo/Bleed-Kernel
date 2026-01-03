@@ -3,11 +3,12 @@
 #include <drivers/framebuffer/framebuffer.h>
 #include <drivers/framebuffer/framebuffer_console.h>
 #include <devices/device_io.h>
+#include <mm/spinlock.h>
 #include <stdio.h>
 
 static void tty_fb_putchar(tty_t *tty, char c) {
     tty_fb_backend_t *b = tty->backend;
-    framebuffer_ansi_char(&b->fb, &b->ansi, c);
+    framebuffer_ansi_char(&b->fb, &b->fb_lock, &b->ansi, c);
 }
 
 static void tty_fb_clear(tty_t *tty) {
@@ -47,7 +48,7 @@ void tty_process_input(tty_t *tty, char c) {
 
 void tty_init(tty_t *tty, const char *name,
               struct tty_ops *ops, void *backend,
-              uint32_t flags) {
+              spinlock_t lock, uint32_t flags) {
     memset(tty, 0, sizeof(*tty));
 
     tty->flags   = flags;
@@ -59,6 +60,8 @@ void tty_init(tty_t *tty, const char *name,
     tty->device.write = tty_write;
     tty->device.ioctl = tty_ioctl;
     tty->device.priv  = tty;
+    
+    spinlock_init(&lock);
 }
 
 void tty_input_char(tty_t *tty, char c) {
@@ -78,8 +81,11 @@ void tty_input_char(tty_t *tty, char c) {
 }
 
 void tty_init_framebuffer(tty_t *tty, tty_fb_backend_t *backend, const char *name, fb_console_t *fb, uint32_t flags) {
+    spinlock_t framebuffer_lock = {0};
+
     backend->fb   = *fb;
     backend->ansi = (ansii_state_t){0};
+    backend->fb_lock = framebuffer_lock;
 
-    tty_init(tty, name, &fb_ops, backend, flags);
+    tty_init(tty, name, &fb_ops, backend, backend->fb_lock, flags);
 }

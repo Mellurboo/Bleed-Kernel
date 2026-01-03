@@ -131,10 +131,13 @@ void kmain() {
     kernel_self_test();
     asm volatile ("sti");
 
-    PS2_Keyboard_init(tty0);
+    PS2_Keyboard_init();
     load_elf_from_initrd("initrd/bin/verdict");
 
-    for (;;){}
+    for(;;){
+        sched_yield();
+    }
+
     ke_panic("Kernel Main Thread Died");
     return;
 }

@@ -2,6 +2,7 @@
 
 #include <fonts/psf.h>
 #include <drivers/framebuffer/framebuffer_console.h>
+#include <mm/spinlock.h>
 
 typedef struct {
     uint32_t fg;
@@ -39,13 +40,16 @@ void framebuffer_put_char(fb_console_t *fb, char c);
 void framebuffer_write_string(
     fb_console_t *fb,
     ansii_state_t *ansi,
-    const char *str
+    const char *str,
+    spinlock_t *framebuffer_lock
 );
 
 /// @brief evaluate c and track its ansii state
 /// @param c target
-void framebuffer_ansi_char(fb_console_t *fb, ansii_state_t *st, char c);
+void framebuffer_ansi_char(fb_console_t *fb, spinlock_t *framebuffer_lock, ansii_state_t *st, char c);
 
 /// @brief clear the framebuffer
 /// @param color bg colour to clear with
 void framebuffer_clear(uint32_t *pixels, uint64_t width, uint64_t height, uint64_t pitch, uint32_t colour);
+
+void lockinit();
