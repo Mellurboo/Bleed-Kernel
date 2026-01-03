@@ -14,7 +14,7 @@ static void framebuffer_scroll(fb_console_t *fb) {
     size_t row_px = fb->font->height;
     size_t scroll_px = row_px * fb->pitch;
     size_t total_px = fb->pitch * fb->height;
-
+    
     memmove(
         fb->pixels,
         fb->pixels + scroll_px,
