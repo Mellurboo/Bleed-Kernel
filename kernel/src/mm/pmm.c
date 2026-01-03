@@ -96,6 +96,10 @@ uint8_t pmm_init() {
         
         memset(bmentry->bitmap, FRAME_FREE, ((bmentry->capacity) + 7) / 8);
         size_t bitmap_header_page_size = PAGE_ALIGN_UP(sizeof(bitmap_entry_t) + (bmentry->capacity + 7) / 8) / PAGE_SIZE;
+
+        bmentry->capacity = (mmap->entries[i]->length / PAGE_SIZE) - bitmap_header_page_size;
+        bmentry->available_pages = bmentry->capacity;
+
         paging_mark_entry_unavailable(bmentry, 0, bitmap_header_page_size);
 
         serial_printf(LOG_INFO "Usable Space Bitmap created: %p of %d pages\n", (void *)bmentry, bmentry->available_pages);
@@ -117,8 +121,8 @@ static int64_t paging_bitmap_find_free(bitmap_entry_t* entry, size_t count){
         size_t byte = entry->bitmap[i / 8];
         if (!(byte & (1 << (i % 8)))){
             if (free_extention == 0) start = i;
-            free_extention++;
             if (free_extention == count) return start;
+            free_extention++;
         }else{
             free_extention = 0;
         }
@@ -142,6 +146,8 @@ paddr_t pmm_alloc_pages(size_t page_count){
 
             paging_mark_entry_unavailable(head, start, page_count);
             uintptr_t paddr = (((paddr_t)head) - hhdm->offset) + (start * PAGE_SIZE);
+
+            memset(paddr_to_vaddr(paddr), 0, PAGE_SIZE);
 
             return paddr;
         }
