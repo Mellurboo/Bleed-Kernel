@@ -4,18 +4,29 @@
 #include <drivers/framebuffer/framebuffer.h>
 #include <drivers/framebuffer/framebuffer_console.h>
 #include <mm/spinlock.h>
+#include <mm/heap.h>
 #include <panic.h>
 
 extern volatile struct limine_framebuffer_request framebuffer_request;
 
-// TODO: this wont scale well at all, change later
-uint32_t fb_buffer[4096*256];
+static uint32_t *fb_buffer = NULL;
+static size_t fb_buffer_size = 0;
 
 uint32_t* framebuffer_get_buffer(void) {
     return fb_buffer;
 }
 
+void framebuffer_init_buffer(fb_console_t *fb) {
+    size_t size = fb->pitch * fb->height * sizeof(uint32_t);
+    if (size != fb_buffer_size) {
+        fb_buffer = kmalloc(size);
+        fb_buffer_size = size;
+    }
+    memset(fb_buffer, 0, fb_buffer_size);
+}
+
 static inline void framebuffer_clear_row(uint32_t* buffer, size_t y, size_t pitch, uint32_t color) {
+    if (!buffer) return;
     uint32_t* row = buffer + y * pitch;
     for (size_t i = 0; i < pitch; i++)
         row[i] = color;
@@ -23,6 +34,7 @@ static inline void framebuffer_clear_row(uint32_t* buffer, size_t y, size_t pitc
 
 static void framebuffer_scroll_buffer(fb_console_t *fb) {
     size_t row_px = fb->font->height;
+    if (!fb_buffer) return;
 
     memmove(fb_buffer,
             fb_buffer + row_px * fb->pitch,
@@ -37,23 +49,24 @@ static void framebuffer_scroll_buffer(fb_console_t *fb) {
 }
 
 static inline void framebuffer_draw_glyph_row_mem(fb_console_t *fb, size_t x, size_t y,
-                                                        const uint8_t *glyph_row, uint32_t fg, uint32_t bg) {
-    if (y >= fb->height) return;
+                                                  const uint8_t *glyph_row, uint32_t fg, uint32_t bg) {
+    if (y >= fb->height || !fb_buffer) return;
     uint32_t* dst = fb_buffer + y * fb->pitch + x;
     size_t w = fb->font->width;
 
     for (unsigned int byte = 0; byte < fb->font->bytes_per_row; byte++) {
         uint8_t bits = glyph_row[byte];
-        for (int bit = 0; bit < 8 && (byte*8+bit) < w; bit++)
-            dst[byte*8+bit] = (bits & (0x80 >> bit)) ? fg : bg;
+        for (int bit = 0; bit < 8 && (byte*8+bit) < w; bit++) {
+            if (x + byte*8 + bit < fb->width)
+                dst[byte*8+bit] = (bits & (0x80 >> bit)) ? fg : bg;
+        }
     }
 }
 
 void framebuffer_blit(uint32_t* source, uint32_t* destination, uint32_t width, uint32_t height) {
-    uint64_t* to = (uint64_t*)destination;
-    uint64_t* from = (uint64_t*)source;
-    for (uint64_t i = 0; i < (width * height) / 2; i++)
-        *to++ = *from++;
+    if (!source || !destination) return;
+    for (uint32_t i = 0; i < width * height; i++)
+        destination[i] = source[i];
 }
 
 static void framebuffer_render_char_mem(fb_console_t *fb, size_t row, size_t col, char c, uint32_t fg, uint32_t bg) {
@@ -69,6 +82,8 @@ static void framebuffer_render_char_mem(fb_console_t *fb, size_t row, size_t col
 }
 
 void framebuffer_put_char(fb_console_t *fb, char c) {
+    if (!fb_buffer) framebuffer_init_buffer(fb);
+
     size_t max_cols = fb->width / fb->font->width;
     size_t max_rows = fb->height / fb->font->height;
 
@@ -92,7 +107,7 @@ void framebuffer_put_char(fb_console_t *fb, char c) {
     if (fb->cursor_y >= max_rows)
         framebuffer_scroll_buffer(fb);
     else
-        framebuffer_blit(fb_buffer, fb->pixels, fb->width, fb->height); // blit after each char
+        framebuffer_blit(fb_buffer, fb->pixels, fb->width, fb->height);
 }
 
 void framebuffer_write_string(fb_console_t *fb, ansii_state_t *ansi, const char *str, spinlock_t *framebuffer_lock) {

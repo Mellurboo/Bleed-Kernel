@@ -3,6 +3,7 @@
 #include <drivers/ps2/PS2_keyboard.h>
 #include <drivers/pit/pit.h>
 #include <drivers/pic/pic.h>
+#include <drivers/serial/serial.h>
 #include <ansii.h>
 #include <sched/scheduler.h>
 
@@ -57,7 +58,9 @@ void irq_handler(uint8_t irq) {
             PIC_EOI(irq);
             break;
         default:
-            kprintf(LOG_WARN "the PIC sent an Unimplemented Request [IRQ:%d]\n", irq);
+            serial_printf("%sthe PIC sent an Unimplemented Request [IRQ:%d]\n", LOG_WARN, irq);
+            // do not send EOI Here, it could be a spurious interrupt
+            // https://f.osdev.org/viewtopic.php?t=23291
             break;
     }
 }
