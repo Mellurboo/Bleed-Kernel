@@ -118,10 +118,10 @@ void kmain() {
     scheduler_start();
     asm volatile ("sti");
 
-
     sched_create_task(read_cr3(), (uint64_t)scheduler_reap, KERNEL_CS, KERNEL_SS);
     kernel_self_test();
     PS2_Keyboard_init();
+
     load_elf_from_initrd("initrd/bin/verdict");
 
     for(;;){

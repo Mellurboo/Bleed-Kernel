@@ -8,7 +8,7 @@
 #define KERNEL_STACK_SIZE   8196
 
 #define MAX_TASKS           64
-#define QUANTUM             5
+#define QUANTUM             10
 
 typedef struct cpu_context {
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
