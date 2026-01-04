@@ -49,24 +49,11 @@ void initrd_load(){
 
 // we give the kernel a task here
 void scheduler_start(void) {
+    pic_unmask(0);
     uint64_t rsp;
     asm volatile("mov %%rsp, %0" : "=r"(rsp));
 
     sched_bootstrap((void *)rsp);
-}
-
-void splash(){
-    INode_t* splash = NULL;
-    path_t splash_path = vfs_path_from_abs("initrd/etc/splash.txt");
-
-    vfs_lookup(&splash_path, &splash);
-    
-    size_t splash_size = vfs_filesize(splash);
-    char* splash_buffer = kmalloc(splash_size + 1);
-
-    inode_read(splash, splash_buffer, splash_size, 0);
-
-    kprintf("%s\n", splash_buffer);
 }
 
 task_t *load_elf_from_initrd(const char *path){
@@ -129,10 +116,11 @@ void kmain() {
     pic_init(32, 40);
 
     scheduler_start();
-    sched_create_task(read_cr3(), (uint64_t)scheduler_reap, KERNEL_CS, KERNEL_SS);
-    kernel_self_test();
     asm volatile ("sti");
 
+
+    sched_create_task(read_cr3(), (uint64_t)scheduler_reap, KERNEL_CS, KERNEL_SS);
+    kernel_self_test();
     PS2_Keyboard_init();
     load_elf_from_initrd("initrd/bin/verdict");
 

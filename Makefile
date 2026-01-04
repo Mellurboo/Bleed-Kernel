@@ -91,7 +91,7 @@ $(IMAGE_NAME).iso: limine/limine $(KERNEL_BIN) initrd
 
 .PHONY: run
 run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso -boot d -m $(MEMSZ) -serial stdio -display sdl -D qemu.log -d int -monitor telnet:127.0.0.1:8080,server,nowait
+	qemu-system-x86_64 -cdrom $(IMAGE_NAME).iso --enable-kvm -cpu host -boot d -m $(MEMSZ) -serial stdio -display sdl -D qemu.log -d int -monitor telnet:127.0.0.1:8080,server,nowait
 
 .PHONY: run-uefi
 run-uefi: edk2-ovmf $(IMAGE_NAME).iso
@@ -102,6 +102,7 @@ run-uefi: edk2-ovmf $(IMAGE_NAME).iso
 		-boot d \
 		-serial stdio \
 		-display sdl \
+		--enable-kvm \
 		$(QEMUFLAGS)
 
 .PHONY: clean

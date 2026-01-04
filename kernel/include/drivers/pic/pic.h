@@ -15,6 +15,8 @@
 
 extern volatile uint64_t pit_countdown;
 
+void pic_unmask(uint8_t interrupt);
+
 /// @brief remaps the pic
 /// @param master_offset remap offset for the master pic
 /// @param slave_offset remap offset for the slave pic

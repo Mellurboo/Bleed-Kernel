@@ -12,14 +12,17 @@ static void tty_fb_putchar(tty_t *tty, char c) {
 }
 
 static void tty_fb_clear(tty_t *tty) {
+    uint32_t* buffer = framebuffer_get_buffer();
     fb_console_t *fb = &((tty_fb_backend_t *)tty->backend)->fb;
-    uint32_t *pixels = fb->pixels;
+
     for (uint64_t y = 0; y < fb->height; y++)
         for (uint64_t x = 0; x < fb->width; x++)
-            pixels[y * fb->pitch + x] = fb->bg;
+            buffer[y * fb->pitch + x] = fb->bg;
 
     fb->cursor_x = 0;
     fb->cursor_y = 0;
+
+    framebuffer_blit(buffer, fb->pixels, fb->width, fb->height);
 }
 
 static struct tty_ops fb_ops = {

@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <ansii.h>
 #include <console/console.h>
 
 #define KBD_PORT 0x60
@@ -19,8 +20,10 @@ static volatile int head = 0, tail = 0;
 static keyboard_callback_t kb_callback = NULL;
 
 /// @brief flush the PS2 port of data
-static inline void PS2_Flush(void){
-    while (inb(0x64) & 0x01){
+static inline void PS2_Flush(void) {
+    for (int i = 0; i < 256; i++) {
+        if (!(inb(0x64) & 0x01))
+            break;
         (void)inb(0x60);
     }
 }
@@ -92,6 +95,7 @@ void PS2_Keyboard_callback(char c){
 
 /// @brief flush the PS2 keyboard and prepare for execution
 void PS2_Keyboard_init(){
+    pic_unmask(1);
     PS2_Flush();
     PS2_Keyboard_set_callback(PS2_Keyboard_callback);
 }

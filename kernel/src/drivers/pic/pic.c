@@ -9,6 +9,15 @@
 volatile uint64_t timer_ticks;
 volatile uint64_t pit_countdown = 0;
 
+void pic_unmask(uint8_t interrupt) {
+    if (interrupt < 8) {
+        outb(PIC1_DATA, inb(PIC1_DATA) & ~(1 << interrupt));
+    }
+    else {
+        outb(PIC2_DATA, inb(PIC2_DATA) & ~(1 << (interrupt - 8)));
+    }
+}
+
 /// @brief remaps the pic
 /// @param master_offset remap offset for the master pic
 /// @param slave_offset remap offset for the slave pic
@@ -27,7 +36,7 @@ void pic_init(int master_offset, int slave_offset){
     outb(PIC1_DATA, ICW4_8086);
     outb(PIC2_DATA, ICW4_8086);
 
-    outb(PIC1_DATA, 0xFC);    // kbd and timer mask
+    outb(PIC1_DATA, 0xFF);    // kbd and timer mask
     outb(PIC2_DATA, 0xFF);    // disable all slave IRQs
 }
 
@@ -48,7 +57,7 @@ void irq_handler(uint8_t irq) {
             PIC_EOI(irq);
             break;
         default:
-            kprintf(LOG_WARN "pic sent us an unimplemented req\n");
+            kprintf(LOG_WARN "the PIC sent an Unimplemented Request [IRQ:%d]\n", irq);
             break;
     }
 }
